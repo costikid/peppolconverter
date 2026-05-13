@@ -6,7 +6,7 @@ COPY pom.xml .
 COPY src ./src
 
 # Use Railway's cache mount for Maven dependencies
-RUN --mount=type=cache,target=/root/.m2 mvn clean package -DskipTests
+RUN --mount=type=cache,target=/root/.m2,id=maven-cache mvn clean package -DskipTests
 
 # Runtime stage
 FROM openjdk:17-slim
