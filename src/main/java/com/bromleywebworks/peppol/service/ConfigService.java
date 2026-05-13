@@ -23,9 +23,16 @@ public class ConfigService {
 
     @PostConstruct
     public void load() throws IOException {
+        String envJson = System.getenv("PEPPOL_CONFIG_JSON");
+        if (envJson != null && !envJson.isBlank()) {
+            this.root = (ObjectNode) MAPPER.readTree(envJson);
+            log.info("Loaded Peppol config from PEPPOL_CONFIG_JSON environment variable");
+            return;
+        }
         File configFile = new File("config.json");
         if (!configFile.exists()) {
-            throw new IOException("config.json not found at: " + configFile.getAbsolutePath());
+            throw new IOException("config.json not found at: " + configFile.getAbsolutePath() +
+                    " and PEPPOL_CONFIG_JSON environment variable is not set");
         }
         this.root = (ObjectNode) MAPPER.readTree(configFile);
         log.info("Loaded Peppol config from {}", configFile.getAbsolutePath());

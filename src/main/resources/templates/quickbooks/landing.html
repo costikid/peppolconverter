@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container py-5">
+        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">QuickBooks to Peppol Converter</h1>
+                <p class="lead mb-4">Convert your QuickBooks PDF invoices to Peppol BIS Billing 3.0 UBL XML format.</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <h2 class="h5 mb-3">How it works</h2>
+                <ol>
+                    <li>Upload your QuickBooks PDF invoice</li>
+                    <li>We extract the invoice data including VAT details</li>
+                    <li>Convert to Peppol BIS Billing 3.0 format</li>
+                    <li>Download your XML file</li>
+                </ol>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title h5">Ready to convert?</h3>
+                        <a href="/quickbooks-to-peppol/upload" class="btn btn-primary btn-lg">Start Conversion</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <strong>Important:</strong> Only QuickBooks PDF invoices are supported. Please ensure your PDF is exported directly from QuickBooks.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

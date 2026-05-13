@@ -34,10 +34,11 @@ public class ConvertController {
     @PostMapping(value = "/convert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> convert(
             @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "converterType", defaultValue = "freeagent") String converterType,
             @RequestParam(value = "metadata", required = false) String metadataJson) {
 
         try {
-            log.info("Received conversion request for file: {}", file.getOriginalFilename());
+            log.info("Received conversion request for file: {}, converterType: {}", file.getOriginalFilename(), converterType);
 
             // Validate file before processing
             List<String> fileErrors = fileUploadValidator.validate(file);
@@ -50,7 +51,7 @@ public class ConvertController {
             }
 
             // Phase 2: Extract
-            ExtractedInvoice extracted = extractionService.extract(file);
+            ExtractedInvoice extracted = extractionService.extract(file, converterType);
             log.info("Extracted invoice number: {}, buyer: {}",
                     extracted.getInvoiceNumber(),
                     extracted.getBuyer() != null ? extracted.getBuyer().getName() : "null");

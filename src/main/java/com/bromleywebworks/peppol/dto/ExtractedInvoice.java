@@ -14,6 +14,7 @@ public class ExtractedInvoice {
     private LocalDate dueDate;
     private String currency;
     private BigDecimal totalAmount;
+    private BigDecimal vatAmount;
     private BigDecimal paidAmount;
     private BigDecimal dueAmount;
 

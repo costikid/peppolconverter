@@ -310,6 +310,146 @@ public class WebController {
                 .body(xmlOutput != null ? xmlOutput.getBytes() : new byte[0]);
     }
 
+    @GetMapping("/quickbooks-to-peppol")
+    public String quickbooksLanding(Model model) {
+        List<BreadcrumbItem> breadcrumbItems = new ArrayList<>();
+        breadcrumbItems.add(new BreadcrumbItem("QuickBooks to Peppol", "/quickbooks-to-peppol", true));
+
+        model.addAttribute("title", "QuickBooks to Peppol Converter");
+        model.addAttribute("description", "Convert QuickBooks PDF invoices to Peppol BIS Billing 3.0 UBL XML");
+        model.addAttribute("canonicalUrl", "https://localhost:8080/quickbooks-to-peppol");
+        model.addAttribute("breadcrumbItems", breadcrumbItems);
+        return "quickbooks/landing";
+    }
+
+    @GetMapping("/quickbooks-to-peppol/upload")
+    public String quickbooksUpload(Model model) {
+        List<BreadcrumbItem> breadcrumbItems = new ArrayList<>();
+        breadcrumbItems.add(new BreadcrumbItem("QuickBooks to Peppol", "/quickbooks-to-peppol", false));
+        breadcrumbItems.add(new BreadcrumbItem("Upload", "/quickbooks-to-peppol/upload", true));
+
+        model.addAttribute("title", "Upload QuickBooks Invoice");
+        model.addAttribute("description", "Upload your QuickBooks PDF invoice to convert to Peppol");
+        model.addAttribute("canonicalUrl", "https://localhost:8080/quickbooks-to-peppol/upload");
+        model.addAttribute("breadcrumbItems", breadcrumbItems);
+        model.addAttribute("uploadForm", new UploadForm());
+        return "quickbooks/upload";
+    }
+
+    @PostMapping("/quickbooks-to-peppol/upload")
+    public String processQuickBooksUpload(
+            @ModelAttribute UploadForm uploadForm,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+
+        List<String> errors = fileUploadValidator.validate(uploadForm, ConverterType.QUICKBOOKS);
+        if (!errors.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", String.join(", ", errors));
+            return "redirect:/quickbooks-to-peppol/upload";
+        }
+
+        String sessionId = java.util.UUID.randomUUID().toString();
+        try {
+            ExtractedInvoice extracted = extractionService.extract(uploadForm.getPdfFile(), "quickbooks");
+
+            ConvertRequest request = new ConvertRequest();
+            request.setBuyerEndpoint(uploadForm.getBuyerEndpoint());
+            request.setBuyerScheme(uploadForm.getBuyerScheme());
+            request.setDueDate(uploadForm.getDueDate());
+            request.setCurrency(uploadForm.getCurrency());
+            request.setVatCategory(uploadForm.getVatCategory());
+
+            InvoiceType invoice = mappingService.map(extracted, request);
+
+            List<String> validationErrors = validationService.validate(invoice);
+            if (!validationErrors.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error",
+                        "Validation failed: " + String.join("; ", validationErrors));
+                return "redirect:/quickbooks-to-peppol/upload";
+            }
+
+            String xmlOutput = UBL21Writer.invoice().getAsString(invoice);
+            session.setAttribute("sessionId", sessionId);
+            session.setAttribute("xmlOutput", xmlOutput);
+            session.setAttribute("invoiceNumber", extracted.getInvoiceNumber());
+
+        } catch (Exception e) {
+            log.error("QuickBooks conversion failed", e);
+            redirectAttributes.addFlashAttribute("error", "Conversion failed: " + e.getMessage());
+            return "redirect:/quickbooks-to-peppol/upload";
+        }
+
+        return "redirect:/quickbooks-to-peppol/result/" + sessionId;
+    }
+
+    @GetMapping("/quickbooks-to-peppol/status/{sessionId}")
+    public String quickbooksStatus(
+            @PathVariable String sessionId,
+            Model model,
+            HttpSession session) {
+
+        if (!sessionId.equals(session.getAttribute("sessionId"))) {
+            return "redirect:/quickbooks-to-peppol/upload";
+        }
+
+        List<BreadcrumbItem> breadcrumbItems = new ArrayList<>();
+        breadcrumbItems.add(new BreadcrumbItem("QuickBooks to Peppol", "/quickbooks-to-peppol", false));
+        breadcrumbItems.add(new BreadcrumbItem("Status", "/quickbooks-to-peppol/status/" + sessionId, true));
+
+        model.addAttribute("title", "Processing Invoice");
+        model.addAttribute("description", "Your QuickBooks invoice is being converted to Peppol");
+        model.addAttribute("canonicalUrl", "https://localhost:8080/quickbooks-to-peppol/status/" + sessionId);
+        model.addAttribute("breadcrumbItems", breadcrumbItems);
+        model.addAttribute("sessionId", sessionId);
+        return "quickbooks/status";
+    }
+
+    @GetMapping("/quickbooks-to-peppol/result/{sessionId}")
+    public String quickbooksResult(
+            @PathVariable String sessionId,
+            Model model,
+            HttpSession session) {
+
+        if (!sessionId.equals(session.getAttribute("sessionId"))) {
+            return "redirect:/quickbooks-to-peppol/upload";
+        }
+
+        String xmlOutput = (String) session.getAttribute("xmlOutput");
+        String invoiceNumber = (String) session.getAttribute("invoiceNumber");
+
+        List<BreadcrumbItem> breadcrumbItems = new ArrayList<>();
+        breadcrumbItems.add(new BreadcrumbItem("QuickBooks to Peppol", "/quickbooks-to-peppol", false));
+        breadcrumbItems.add(new BreadcrumbItem("Result", "/quickbooks-to-peppol/result/" + sessionId, true));
+
+        model.addAttribute("title", "Conversion Complete");
+        model.addAttribute("description", "Your QuickBooks invoice has been converted to Peppol");
+        model.addAttribute("canonicalUrl", "https://localhost:8080/quickbooks-to-peppol/result/" + sessionId);
+        model.addAttribute("breadcrumbItems", breadcrumbItems);
+        model.addAttribute("sessionId", sessionId);
+        model.addAttribute("xmlOutput", xmlOutput);
+        model.addAttribute("invoiceNumber", invoiceNumber);
+        return "quickbooks/result";
+    }
+
+    @GetMapping("/quickbooks-to-peppol/download/{sessionId}")
+    public ResponseEntity<byte[]> downloadQuickBooksXml(
+            @PathVariable String sessionId,
+            HttpSession session) {
+
+        if (!sessionId.equals(session.getAttribute("sessionId"))) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        String xmlOutput = (String) session.getAttribute("xmlOutput");
+        String invoiceNumber = (String) session.getAttribute("invoiceNumber");
+        String filename = invoiceNumber != null ? "invoice-" + invoiceNumber + ".xml" : "peppol-invoice.xml";
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_XML)
+                .body(xmlOutput != null ? xmlOutput.getBytes() : new byte[0]);
+    }
+
     public static class BreadcrumbItem {
         private final String name;
         private final String url;

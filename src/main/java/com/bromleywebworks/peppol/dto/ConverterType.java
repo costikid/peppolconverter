@@ -4,7 +4,8 @@ import java.util.Arrays;
 
 public enum ConverterType {
     FREEAGENT("freeagent", "FreeAgent"),
-    XERO("xero", "Xero");
+    XERO("xero", "Xero"),
+    QUICKBOOKS("quickbooks", "QuickBooks");
 
     private final String slug;
     private final String displayName;

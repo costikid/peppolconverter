@@ -6,11 +6,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public class FileUploadValidator {
@@ -37,6 +39,8 @@ public class FileUploadValidator {
                     MemoryUsageSetting.setupMixed(PDF_MAX_MAIN_MEMORY))) {
                 if (converterType == ConverterType.FREEAGENT) {
                     validateFreeAgentFormat(document, errors);
+                } else if (converterType == ConverterType.QUICKBOOKS) {
+                    validateQuickBooksFormat(document, errors);
                 }
             } catch (IOException e) {
                 errors.add("The PDF file is corrupted or unreadable");
@@ -116,5 +120,29 @@ public class FileUploadValidator {
         // 1. Extract text using PDFBox
         // 2. Check for FreeAgent-specific text patterns (e.g., "FreeAgent", "Invoice", etc.)
         // 3. Validate the layout matches expected FreeAgent template
+    }
+
+    private void validateQuickBooksFormat(PDDocument document, List<String> errors) {
+        try {
+            PDFTextStripper stripper = new PDFTextStripper();
+            stripper.setSortByPosition(true);
+            String text = stripper.getText(document);
+
+            boolean hasInvoiceNumber = Pattern.compile("INVOICE\\s+\\d+").matcher(text).find();
+            boolean hasDate = Pattern.compile("\\bDATE\\s+\\d{2}/\\d{2}/\\d{4}").matcher(text).find();
+            boolean hasTotals = text.contains("SUBTOTAL") || text.contains("BALANCE DUE");
+
+            if (!hasInvoiceNumber) {
+                errors.add("PDF does not appear to be a QuickBooks invoice (no invoice number found)");
+            }
+            if (!hasDate) {
+                errors.add("PDF does not contain a recognisable QuickBooks date format (DD/MM/YYYY)");
+            }
+            if (!hasTotals) {
+                errors.add("PDF does not contain QuickBooks totals section (SUBTOTAL / BALANCE DUE)");
+            }
+        } catch (IOException e) {
+            errors.add("Could not read PDF text content for QuickBooks validation");
+        }
     }
 }

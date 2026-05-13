@@ -12,6 +12,7 @@ import oasis.names.specification.ubl.schema.xsd.invoice_21.InvoiceType;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Map;
 
@@ -52,12 +53,13 @@ public class MappingService {
 
         // Tax & Monetary Totals
         String vatCategory = resolveVatCategory(extracted);
-        invoice.getTaxTotal().add(buildTaxTotal(extracted, vatCategory));
+        BigDecimal effectiveTaxPercent = resolveEffectiveTaxPercent(extracted, vatCategory);
+        invoice.getTaxTotal().add(buildTaxTotal(extracted, vatCategory, effectiveTaxPercent));
         invoice.setLegalMonetaryTotal(buildLegalMonetaryTotal(extracted));
 
         // Invoice Lines
         for (ExtractedInvoice.LineItem line : extracted.getLineItems()) {
-            invoice.getInvoiceLine().add(buildInvoiceLine(line, extracted.getCurrency(), vatCategory));
+            invoice.getInvoiceLine().add(buildInvoiceLine(line, extracted.getCurrency(), vatCategory, effectiveTaxPercent));
         }
 
         return invoice;
@@ -100,17 +102,21 @@ public class MappingService {
         }
         p.addPartyLegalEntity(legal);
 
-        // VAT only if registered
-        if (configService.isSellerVatRegistered()) {
-            PartyTaxSchemeType taxScheme = new PartyTaxSchemeType();
-            String vatNumber = configService.getSellerString("vatNumber");
-            if (vatNumber != null && !vatNumber.isEmpty()) {
-                taxScheme.setCompanyID(new CompanyIDType(vatNumber));
-                TaxSchemeType ts = new TaxSchemeType();
-                ts.setID(new IDType(TAX_SCHEME_ID));
-                taxScheme.setTaxScheme(ts);
-                p.addPartyTaxScheme(taxScheme);
+        // VAT: use config vatNumber if registered, or extracted seller vatNumber as fallback
+        String vatNumber = configService.isSellerVatRegistered()
+                ? configService.getSellerString("vatNumber")
+                : (extracted.getSeller() != null ? extracted.getSeller().getVatNumber() : null);
+        if (vatNumber != null && !vatNumber.isEmpty()) {
+            // BR-CO-09: must have ISO 3166-1 alpha-2 country prefix
+            if (!vatNumber.matches("^[A-Z]{2}.*")) {
+                vatNumber = "GB" + vatNumber;
             }
+            PartyTaxSchemeType taxScheme = new PartyTaxSchemeType();
+            taxScheme.setCompanyID(new CompanyIDType(vatNumber));
+            TaxSchemeType ts = new TaxSchemeType();
+            ts.setID(new IDType(TAX_SCHEME_ID));
+            taxScheme.setTaxScheme(ts);
+            p.addPartyTaxScheme(taxScheme);
         }
 
         party.setParty(p);
@@ -224,9 +230,28 @@ public class MappingService {
         return pt;
     }
 
-    private TaxTotalType buildTaxTotal(ExtractedInvoice extracted, String vatCategory) {
+    private BigDecimal resolveEffectiveTaxPercent(ExtractedInvoice extracted, String vatCategory) {
+        BigDecimal taxPercent = extracted.getLineItems().stream()
+                .map(ExtractedInvoice.LineItem::getVatRate)
+                .filter(r -> r != null && r.compareTo(BigDecimal.ZERO) > 0)
+                .findFirst()
+                .orElse(BigDecimal.ZERO);
+
+        if (taxPercent.compareTo(BigDecimal.ZERO) == 0
+                && "S".equals(vatCategory)
+                && extracted.getVatAmount() != null && extracted.getVatAmount().compareTo(BigDecimal.ZERO) > 0
+                && extracted.getTotalAmount() != null && extracted.getTotalAmount().compareTo(BigDecimal.ZERO) > 0) {
+            taxPercent = extracted.getVatAmount()
+                    .multiply(new BigDecimal("100"))
+                    .divide(extracted.getTotalAmount(), 0, RoundingMode.HALF_UP);
+            log.info("Computed taxPercent from totals ratio: {}", taxPercent);
+        }
+        return taxPercent;
+    }
+
+    private TaxTotalType buildTaxTotal(ExtractedInvoice extracted, String vatCategory, BigDecimal taxPercent) {
         TaxTotalType taxTotal = new TaxTotalType();
-        BigDecimal taxAmount = BigDecimal.ZERO;
+        BigDecimal taxAmount = extracted.getVatAmount() != null ? extracted.getVatAmount() : BigDecimal.ZERO;
 
         taxTotal.setTaxAmount(new TaxAmountType(taxAmount));
         taxTotal.getTaxAmount().setCurrencyID(extracted.getCurrency());
@@ -240,8 +265,8 @@ public class MappingService {
 
         TaxCategoryType taxCat = new TaxCategoryType();
         taxCat.setID(new IDType(vatCategory));
-        if (configService.isSellerVatRegistered()) {
-            taxCat.setPercent(new PercentType(BigDecimal.ZERO));
+        if (configService.isSellerVatRegistered() || taxPercent.compareTo(BigDecimal.ZERO) > 0) {
+            taxCat.setPercent(new PercentType(taxPercent));
         }
         if (!"S".equals(vatCategory)) {
             String reason = "O".equals(vatCategory) ? "Not VAT registered" : "Zero rated";
@@ -260,12 +285,14 @@ public class MappingService {
         MonetaryTotalType total = new MonetaryTotalType();
         String currency = extracted.getCurrency();
         BigDecimal lineExtension = extracted.getTotalAmount() != null ? extracted.getTotalAmount() : BigDecimal.ZERO;
+        BigDecimal vatAmount = extracted.getVatAmount() != null ? extracted.getVatAmount() : BigDecimal.ZERO;
+        BigDecimal taxInclusive = lineExtension.add(vatAmount);
 
         total.setLineExtensionAmount(new LineExtensionAmountType(lineExtension));
         total.getLineExtensionAmount().setCurrencyID(currency);
         total.setTaxExclusiveAmount(new TaxExclusiveAmountType(lineExtension));
         total.getTaxExclusiveAmount().setCurrencyID(currency);
-        total.setTaxInclusiveAmount(new TaxInclusiveAmountType(lineExtension));
+        total.setTaxInclusiveAmount(new TaxInclusiveAmountType(taxInclusive));
         total.getTaxInclusiveAmount().setCurrencyID(currency);
 
         // If there's a paid amount, set PrepaidAmount
@@ -281,7 +308,7 @@ public class MappingService {
         return total;
     }
 
-    private InvoiceLineType buildInvoiceLine(ExtractedInvoice.LineItem line, String currency, String vatCategory) {
+    private InvoiceLineType buildInvoiceLine(ExtractedInvoice.LineItem line, String currency, String vatCategory, BigDecimal effectiveTaxPercent) {
         InvoiceLineType il = new InvoiceLineType();
         il.setID(new IDType(String.valueOf(line.getLineNumber())));
         InvoicedQuantityType qty = new InvoicedQuantityType(line.getQuantity());
@@ -294,11 +321,13 @@ public class MappingService {
         item.setName(new NameType(line.getDescription()));
         item.getDescription().add(new DescriptionType(line.getDescription()));
 
-        // VAT category on item level
+        // VAT category on item level — use effectiveTaxPercent so it matches TaxSubtotal (BR-S-05, BR-S-08)
+        BigDecimal linePercent = line.getVatRate() != null && line.getVatRate().compareTo(BigDecimal.ZERO) > 0
+                ? line.getVatRate() : effectiveTaxPercent;
         TaxCategoryType taxCat = new TaxCategoryType();
         taxCat.setID(new IDType(vatCategory));
-        if (configService.isSellerVatRegistered()) {
-            taxCat.setPercent(new PercentType(line.getVatRate()));
+        if (linePercent.compareTo(BigDecimal.ZERO) > 0) {
+            taxCat.setPercent(new PercentType(linePercent));
         }
         TaxSchemeType scheme = new TaxSchemeType();
         scheme.setID(new IDType(TAX_SCHEME_ID));
@@ -316,10 +345,28 @@ public class MappingService {
     }
 
     private String resolveVatCategory(ExtractedInvoice extracted) {
-        if (!configService.isSellerVatRegistered()) {
-            return "O";
+        // Explicit VAT rate from line items takes priority over config (e.g. QuickBooks 20%)
+        for (ExtractedInvoice.LineItem line : extracted.getLineItems()) {
+            if (line.getVatRate() != null && line.getVatRate().compareTo(BigDecimal.ZERO) > 0) {
+                return vatRateToPeppolCategory(line.getVatRate());
+            }
         }
 
+        // Invoice-level VAT amount also overrides config
+        if (extracted.getVatAmount() != null && extracted.getVatAmount().compareTo(BigDecimal.ZERO) > 0) {
+            return "S";
+        }
+
+        // No explicit VAT in the invoice — respect config registration flag
+        if (!configService.isSellerVatRegistered()) {
+            // If the PDF contains a seller VAT number, seller is VAT registered → zero-rated, not "O"
+            boolean extractedVatRegistered = extracted.getSeller() != null
+                    && extracted.getSeller().getVatNumber() != null
+                    && !extracted.getSeller().getVatNumber().isEmpty();
+            return extractedVatRegistered ? "Z" : "O";
+        }
+
+        // Fallback to config vatMappings (description-based)
         Map<String, String> vatMappings = configService.getVatMappings();
         for (ExtractedInvoice.LineItem line : extracted.getLineItems()) {
             String desc = line.getDescription().toLowerCase();
@@ -331,7 +378,14 @@ public class MappingService {
         }
 
         // Default: if no VAT amount, assume Z; otherwise S
-        BigDecimal totalVat = BigDecimal.ZERO; // We could calculate from lines if rates present
+        BigDecimal totalVat = BigDecimal.ZERO;
         return totalVat.compareTo(BigDecimal.ZERO) == 0 ? "Z" : "S";
+    }
+
+    private String vatRateToPeppolCategory(BigDecimal vatRate) {
+        int rate = vatRate.intValue();
+        if (rate == 20) return "S";
+        if (rate == 5)  return "R";
+        return "Z";
     }
 }
