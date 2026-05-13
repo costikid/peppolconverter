@@ -1,0 +1,49 @@
+{
+  "seller": {
+    "name": "Your Company Name",
+    "companyNumber": "12345678",
+    "endpointID": "7300010000001",
+    "schemeID": "0088",
+    "isVatRegistered": false,
+    "defaultVatCategory": "O",
+    "address": {
+      "street": "123 Street Name",
+      "city": "City Name",
+      "postcode": "POST CODE",
+      "countryCode": "GB"
+    },
+    "contact": {
+      "name": "Contact Name",
+      "telephone": "01234567890",
+      "email": "contact@example.com"
+    },
+    "bankDetails": {
+      "bankName": "Bank Name",
+      "sortCode": "000000",
+      "accountNumber": "00000000"
+    }
+  },
+  "mappings": {
+    "units": {
+      "hour": "HUR",
+      "day": "DAY",
+      "each": "EA",
+      "unit": "EA",
+      "service": "EA"
+    },
+    "vat": {
+      "insurance": "E",
+      "education": "E",
+      "health": "E",
+      "book": "Z",
+      "children": "Z",
+      "food": "Z"
+    }
+  },
+  "buyerLookup": {
+    "Buyer Company Name": {
+      "endpointID": "9948:GB123456789",
+      "schemeID": "9948"
+    }
+  }
+}
