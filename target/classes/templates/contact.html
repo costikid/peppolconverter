@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container py-5">
+        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h1 class="mb-4">Contact</h1>
+                <p class="lead mb-4">Get in touch</p>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h2 class="card-title h5 mb-3">Developer</h2>
+                        <p>
+                            <strong>Costanza</strong><br>
+                            Software Developer<br>
+                            <a href="mailto:costanza@bromleywebworks.co.uk" target="_blank" rel="noopener">costanza@bromleywebworks.co.uk</a>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title h5 mb-3">Support</h2>
+                        <p>
+                            If you encounter issues with the Peppol Converter or have feature requests,
+                            please reach out via the website above.
+                        </p>
+                        <p class="mb-0">
+                            When reporting issues, please include:
+                        </p>
+                        <ul>
+                            <li>The accounting system you're using (e.g., FreeAgent, Xero)</li>
+                            <li>The error message you received</li>
+                            <li>Any steps you took before the error occurred</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

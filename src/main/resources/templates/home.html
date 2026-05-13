@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container py-5">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">Peppol Converter</h1>
+                <p class="text-center lead mb-5">Convert accounting invoices to Peppol BIS Billing 3.0</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h2 class="card-title h4">Invoice to Peppol</h2>
+                        <p class="card-text">Convert PDF invoices to Peppol BIS Billing 3.0 UBL XML format.</p>
+                        <a href="/freeagent-to-peppol" class="btn btn-primary">Start Conversion</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <strong>Note:</strong> Currently supports FreeAgent PDF invoices only. More converters coming soon.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container py-5">
+        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h1 class="mb-4">Privacy Policy</h1>
+                <p class="lead mb-4">How we handle your data</p>
+
+                <h3 class="h5 mb-3">Data Storage</h3>
+                <p>
+                    Uploaded PDF files are stored temporarily in your browser session and are not persisted on our servers.
+                    Once your session expires or you close your browser, the data is deleted.
+                </p>
+
+                <h3 class="h5 mb-3">What We Process</h3>
+                <p>
+                    We only extract the invoice data necessary for conversion to Peppol format:
+                    invoice number, dates, amounts, line items, and party details.
+                </p>
+
+                <h3 class="h5 mb-3">Third-Party Services</h3>
+                <p>
+                    We do not use any third-party analytics or tracking services. This is a self-hosted tool.
+                </p>
+
+                <h3 class="h5 mb-3">Cookies</h3>
+                <p>
+                    We use session cookies to maintain your conversion state during the upload process.
+                    No persistent tracking cookies are used.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

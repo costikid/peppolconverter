@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  peppol-converter:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config.json:/app/config.json:ro
+    environment:
+      - JAVA_OPTS=-Xmx512m

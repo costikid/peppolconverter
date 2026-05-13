@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container py-5">
+        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+        <div th:replace="fragments/flash-messages :: flash-messages"></div>
+
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">Upload FreeAgent Invoice</h1>
+                <p class="lead mb-4">Upload your FreeAgent PDF invoice to convert it to Peppol BIS Billing 3.0 format.</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="alert alert-warning mb-4">
+                    <strong>Important:</strong> Only FreeAgent PDF invoices are supported. Please upload a PDF exported from FreeAgent.
+                </div>
+
+                <form th:action="@{/freeagent-to-peppol/upload}" th:object="${uploadForm}" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="pdfFile" class="form-label">PDF File *</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="pdfFile" 
+                               th:field="*{pdfFile}" 
+                               accept=".pdf"
+                               required>
+                        <div th:if="${#fields.hasErrors('pdfFile')}" class="text-danger mt-1">
+                            <span th:each="error : ${#fields.errors('pdfFile')}" th:text="${error}"></span>
+                        </div>
+                        <div class="form-text">Maximum file size: 10MB</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="buyerEndpoint" class="form-label">Buyer Endpoint (Optional)</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="buyerEndpoint" 
+                               th:field="*{buyerEndpoint}" 
+                               placeholder="e.g., 0192:123456789">
+                        <div class="form-text">Peppol participant ID for the buyer</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="buyerScheme" class="form-label">Buyer Scheme (Optional)</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="buyerScheme" 
+                               th:field="*{buyerScheme}" 
+                               placeholder="e.g., iso6523-actorid-upis">
+                        <div class="form-text">Scheme identifier for the buyer endpoint</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="vatCategory" class="form-label">VAT Category (Optional)</label>
+                        <select class="form-select" id="vatCategory" th:field="*{vatCategory}">
+                            <option value="">Select VAT category</option>
+                            <option value="S">S - Standard rate</option>
+                            <option value="Z">Z - Zero rate</option>
+                            <option value="E">E - Exempt from VAT</option>
+                            <option value="AE">AE - Reverse charge</option>
+                            <option value="K">K - Intra-Community supply</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="dueDate" class="form-label">Due Date (Optional)</label>
+                        <input type="date" 
+                               class="form-control" 
+                               id="dueDate" 
+                               th:field="*{dueDate}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="currency" class="form-label">Currency (Optional)</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="currency" 
+                               th:field="*{currency}" 
+                               placeholder="e.g., GBP, EUR">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg">Convert to Peppol</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

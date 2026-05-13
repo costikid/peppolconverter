@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container py-5">
+        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h1 class="mb-4">Frequently Asked Questions</h1>
+
+                <div class="accordion" id="faqAccordion">
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Which accounting software is supported?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Currently <strong>FreeAgent</strong> PDF invoices are supported. Support for Xero and other
+                                accounting systems is planned.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                What format does the converter produce?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                The output is <strong>Peppol BIS Billing 3.0</strong> — a UBL 2.1 XML format compliant with the
+                                European standard EN 16931. This is the standard format used across the Peppol network.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Is my invoice data stored on your servers?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                No. Your PDF is processed in memory during your session only. No data is persisted to a database
+                                or file system. Once your session ends, everything is cleared.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                What is a buyer endpoint and do I need one?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                A buyer endpoint is the Peppol participant identifier for the recipient of your invoice
+                                (e.g. <code>0192:123456789</code>). It is required for routing the invoice through the Peppol
+                                network. If you have the buyer's Peppol ID, enter it during upload. If not, you can look it
+                                up in your country's Peppol directory or ask your buyer.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                What is the maximum file size?
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                The maximum file size is <strong>10MB</strong> and a maximum of <strong>10 pages</strong>.
+                                FreeAgent invoices are typically well under 1MB.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                The conversion failed — what should I do?
+                            </button>
+                        </h2>
+                        <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Make sure you are uploading a PDF exported directly from FreeAgent (not a scanned copy or
+                                a PDF from another source). If the problem persists, please
+                                <a href="/contact">contact us</a> with details of the error.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

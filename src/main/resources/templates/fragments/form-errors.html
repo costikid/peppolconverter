@@ -1,0 +1,7 @@
+<div th:fragment="form-errors(field, errors)">
+    <div th:if="${errors != null && !errors.isEmpty()}" class="alert alert-danger" role="alert">
+        <ul class="mb-0">
+            <li th:each="error : ${errors}" th:text="${error}"></li>
+        </ul>
+    </div>
+</div>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container py-5">
+        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h1 class="mb-4">How It Works</h1>
+                <p class="lead mb-5">
+                    Peppol Converter turns your accounting software PDF invoices into Peppol BIS Billing 3.0 XML
+                    in seconds — no manual data entry required.
+                </p>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="card h-100 text-center border-0 bg-light">
+                    <div class="card-body py-4">
+                        <div class="display-6 mb-3">1</div>
+                        <h3 class="h5 mb-2">Export your PDF</h3>
+                        <p class="text-muted small mb-0">Export an invoice as a PDF from your accounting software (e.g. FreeAgent).</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center border-0 bg-light">
+                    <div class="card-body py-4">
+                        <div class="display-6 mb-3">2</div>
+                        <h3 class="h5 mb-2">Upload</h3>
+                        <p class="text-muted small mb-0">Upload the PDF to Peppol Converter and optionally provide buyer endpoint details.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center border-0 bg-light">
+                    <div class="card-body py-4">
+                        <div class="display-6 mb-3">3</div>
+                        <h3 class="h5 mb-2">We extract &amp; convert</h3>
+                        <p class="text-muted small mb-0">We extract invoice data using PDFBox and map it to Peppol BIS Billing 3.0 UBL format.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center border-0 bg-light">
+                    <div class="card-body py-4">
+                        <div class="display-6 mb-3">4</div>
+                        <h3 class="h5 mb-2">Download XML</h3>
+                        <p class="text-muted small mb-0">Download the validated Peppol XML file, ready to send via an access point.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <h2 class="h4 mb-3">What is Peppol?</h2>
+                <p>
+                    Peppol (Pan-European Public Procurement On-Line) is a set of technical specifications that enable
+                    businesses to exchange electronic documents — such as invoices and orders — over the Peppol network.
+                    It is widely used across Europe for B2B and government (B2G) e-invoicing.
+                </p>
+
+                <h2 class="h4 mb-3 mt-4">What format does this produce?</h2>
+                <p>
+                    The output is <strong>Peppol BIS Billing 3.0</strong>, which is based on the European standard EN 16931
+                    and uses UBL 2.1 XML. It is the most widely accepted e-invoice format across the Peppol network.
+                </p>
+
+                <div class="mt-4">
+                    <a href="/freeagent-to-peppol/upload" class="btn btn-primary btn-lg">Start Converting</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+
+</body>
+</html>

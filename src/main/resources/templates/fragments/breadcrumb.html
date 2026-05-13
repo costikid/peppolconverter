@@ -1,0 +1,11 @@
+<nav th:fragment="breadcrumb(items)" aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li th:each="item : ${items}" 
+            th:class="${item.last} ? 'breadcrumb-item active' : 'breadcrumb-item'"
+            th:aria-current="${item.last} ? 'page' : null">
+            <a th:if="${!item.last}" th:href="${item.url}" th:text="${item.name}"></a>
+            <span th:if="${item.last}" th:text="${item.name}"></span>
+        </li>
+    </ol>
+</nav>
