@@ -1,0 +1,24 @@
+spring:
+  redis:
+    enabled: true
+    url: ${REDIS_URL}
+  security:
+    oauth2:
+      client:
+        registration:
+          freeagent:
+            client-id: ${FREEAGENT_CLIENT_ID}
+            client-secret: ${FREEAGENT_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: https://peppolconverter.co.uk/oauth2/callback/freeagent
+            scope: https://api.freeagent.com/v2/,offline_access
+        provider:
+          freeagent:
+            authorization-uri: https://api.freeagent.com/v2/approve_app
+            token-uri: https://api.freeagent.com/v2/token_endpoint
+            user-info-uri: https://api.freeagent.com/v2/users/me
+
+app:
+  cookie:
+    secret: ${COOKIE_SECRET}
+    secret-previous: ${COOKIE_SECRET_PREVIOUS:}

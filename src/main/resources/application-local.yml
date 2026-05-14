@@ -1,0 +1,23 @@
+spring:
+  redis:
+    enabled: false
+  security:
+    oauth2:
+      client:
+        registration:
+          freeagent:
+            client-id: ${FREEAGENT_CLIENT_ID}
+            client-secret: ${FREEAGENT_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8080/oauth2/callback/freeagent
+            scope: https://api.freeagent.com/v2/,offline_access
+        provider:
+          freeagent:
+            authorization-uri: https://api.freeagent.com/v2/approve_app
+            token-uri: https://api.freeagent.com/v2/token_endpoint
+            user-info-uri: https://api.freeagent.com/v2/users/me
+
+app:
+  cookie:
+    secret: ${COOKIE_SECRET:local-dev-secret-not-for-production}
+    secret-previous: ${COOKIE_SECRET_PREVIOUS:}
