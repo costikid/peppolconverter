@@ -15,4 +15,8 @@ public class UploadForm {
     private String vatCategory;
     private String dueDate;
     private String currency;
+    private String buyerStreet;
+    private String buyerCity;
+    private String buyerPostcode;
+    private String buyerCountryCode;
 }
