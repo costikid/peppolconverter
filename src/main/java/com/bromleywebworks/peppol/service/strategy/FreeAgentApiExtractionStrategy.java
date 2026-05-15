@@ -6,6 +6,7 @@ import com.bromleywebworks.peppol.service.ConfigService;
 import com.bromleywebworks.peppol.service.FreeAgentApiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(FreeAgentApiClient.class)
 public class FreeAgentApiExtractionStrategy implements ExtractionStrategy {
 
     // Note: CustomizationID and ProfileID already hardcoded in existing MappingService.java lines 24-25
