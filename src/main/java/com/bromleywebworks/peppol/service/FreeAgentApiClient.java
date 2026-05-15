@@ -3,6 +3,7 @@ package com.bromleywebworks.peppol.service;
 import com.bromleywebworks.peppol.dto.freeagent.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(OAuth2AuthorizedClientManager.class)
 public class FreeAgentApiClient {
 
     private final OAuth2AuthorizedClientManager authorizedClientManager;
