@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -450,6 +452,47 @@ public class WebController {
                 .body(xmlOutput != null ? xmlOutput.getBytes() : new byte[0]);
     }
 
+<<<<<<< HEAD
+    @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<String> sitemap() {
+        String baseUrl = "https://localhost:8080";
+        String lastmod = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
+
+        StringBuilder sitemap = new StringBuilder();
+        sitemap.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        sitemap.append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+
+        String[] urls = {
+            "/",
+            "/about",
+            "/contact",
+            "/faq",
+            "/how-it-works",
+            "/privacy",
+            "/terms",
+            "/blog",
+            "/freeagent-to-peppol",
+            "/quickbooks-to-peppol"
+        };
+
+        for (String url : urls) {
+            sitemap.append("  <url>\n");
+            sitemap.append("    <loc>").append(baseUrl).append(url).append("</loc>\n");
+            sitemap.append("    <lastmod>").append(lastmod).append("</lastmod>\n");
+            sitemap.append("    <changefreq>weekly</changefreq>\n");
+            sitemap.append("    <priority>0.8</priority>\n");
+            sitemap.append("  </url>\n");
+        }
+
+        sitemap.append("</urlset>");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_XML)
+                .body(sitemap.toString());
+    }
+
+=======
+>>>>>>> 5b7840b (Fix Railway deployment: Dockerfile overhaul, env var config support, QuickBooks extraction strategy, updated controllers and services)
     public static class BreadcrumbItem {
         private final String name;
         private final String url;
