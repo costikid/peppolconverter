@@ -189,9 +189,9 @@ public class MappingService {
         if (lookup != null && lookup.has("schemeID")) {
             return lookup.get("schemeID").asText();
         }
-        throw new MissingIdentifierException(
-                "Missing buyer schemeID for: " + buyerName +
-                ". Provide it in the request metadata or add to config.json buyerLookup.");
+        // Default to "9999" (generic/unknown scheme) if not provided
+        log.warn("No buyer schemeID found for: {}. Using default scheme '9999'", buyerName);
+        return "9999";
     }
 
     private PaymentMeansType buildPaymentMeans(ExtractedInvoice extracted) {
