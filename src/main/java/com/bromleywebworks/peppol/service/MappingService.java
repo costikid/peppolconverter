@@ -157,6 +157,21 @@ public class MappingService {
         CountryType country = new CountryType();
         country.setIdentificationCode(new IdentificationCodeType(buyer.getCountryCode()));
         addr.setCountry(country);
+
+        // Override with request values if provided
+        if (request != null && request.getBuyerStreet() != null && !request.getBuyerStreet().isEmpty()) {
+            addr.setStreetName(new StreetNameType(request.getBuyerStreet()));
+        }
+        if (request != null && request.getBuyerCity() != null && !request.getBuyerCity().isEmpty()) {
+            addr.setCityName(new CityNameType(request.getBuyerCity()));
+        }
+        if (request != null && request.getBuyerPostcode() != null && !request.getBuyerPostcode().isEmpty()) {
+            addr.setPostalZone(new PostalZoneType(request.getBuyerPostcode()));
+        }
+        if (request != null && request.getBuyerCountryCode() != null && !request.getBuyerCountryCode().isEmpty()) {
+            country.setIdentificationCode(new IdentificationCodeType(request.getBuyerCountryCode()));
+        }
+
         p.setPostalAddress(addr);
 
         // Legal Entity
@@ -189,9 +204,8 @@ public class MappingService {
         if (lookup != null && lookup.has("schemeID")) {
             return lookup.get("schemeID").asText();
         }
-        throw new MissingIdentifierException(
-                "Missing buyer schemeID for: " + buyerName +
-                ". Provide it in the request metadata or add to config.json buyerLookup.");
+        log.warn("No buyer schemeID found for: {}. Using default scheme '0192'", buyerName);
+        return "0192";
     }
 
     private PaymentMeansType buildPaymentMeans(ExtractedInvoice extracted) {

@@ -10,4 +10,8 @@ public class ConvertRequest {
     private String dueDate;
     private String currency;
     private String vatCategory;
+    private String buyerStreet;
+    private String buyerCity;
+    private String buyerPostcode;
+    private String buyerCountryCode;
 }

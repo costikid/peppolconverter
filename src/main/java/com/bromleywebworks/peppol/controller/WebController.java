@@ -213,6 +213,11 @@ public class WebController {
             request.setDueDate(uploadForm.getDueDate());
             request.setCurrency(uploadForm.getCurrency());
             request.setVatCategory(uploadForm.getVatCategory());
+            request.setBuyerStreet(uploadForm.getBuyerStreet());
+            request.setBuyerCity(uploadForm.getBuyerCity());
+            request.setBuyerPostcode(uploadForm.getBuyerPostcode());
+            request.setBuyerCountryCode(uploadForm.getBuyerCountryCode());
+
 
             InvoiceType invoice = mappingService.map(extracted, request);
 
@@ -360,6 +365,11 @@ public class WebController {
             request.setDueDate(uploadForm.getDueDate());
             request.setCurrency(uploadForm.getCurrency());
             request.setVatCategory(uploadForm.getVatCategory());
+            request.setBuyerStreet(uploadForm.getBuyerStreet());
+            request.setBuyerCity(uploadForm.getBuyerCity());
+            request.setBuyerPostcode(uploadForm.getBuyerPostcode());
+            request.setBuyerCountryCode(uploadForm.getBuyerCountryCode());
+
 
             InvoiceType invoice = mappingService.map(extracted, request);
 

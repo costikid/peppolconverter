@@ -58,6 +58,47 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="buyerStreet" class="form-label">Buyer Street Address (Optional)</label>
+                        <input type="text"
+                               class="form-control"
+                               id="buyerStreet"
+                               th:field="*{buyerStreet}"
+                               placeholder="e.g., 123 Main Street">
+                        <div class="form-text">Street address of the buyer</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="buyerCity" class="form-label">Buyer City (Optional)</label>
+                        <input type="text"
+                               class="form-control"
+                               id="buyerCity"
+                               th:field="*{buyerCity}"
+                               placeholder="e.g., London">
+                        <div class="form-text">City of the buyer</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="buyerPostcode" class="form-label">Buyer Postcode (Optional)</label>
+                        <input type="text"
+                               class="form-control"
+                               id="buyerPostcode"
+                               th:field="*{buyerPostcode}"
+                               placeholder="e.g., SW1A 1AA">
+                        <div class="form-text">Postal code of the buyer</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="buyerCountryCode" class="form-label">Buyer Country Code (Optional)</label>
+                        <input type="text"
+                               class="form-control"
+                               id="buyerCountryCode"
+                               th:field="*{buyerCountryCode}"
+                               placeholder="e.g., GB, DE, FR"
+                               maxlength="2">
+                        <div class="form-text">ISO 3166-1 alpha-2 country code (default: GB)</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="vatCategory" class="form-label">VAT Category Override (Optional)</label>
                         <select class="form-select" id="vatCategory" th:field="*{vatCategory}">
                             <option value="">Auto-detect from invoice</option>
