@@ -452,7 +452,6 @@ public class WebController {
                 .body(xmlOutput != null ? xmlOutput.getBytes() : new byte[0]);
     }
 
-<<<<<<< HEAD
     @GetMapping(value = "/sitemap.xml", produces = MediaType.APPLICATION_XML_VALUE)
     public ResponseEntity<String> sitemap() {
         String baseUrl = "https://localhost:8080";
@@ -491,8 +490,7 @@ public class WebController {
                 .body(sitemap.toString());
     }
 
-=======
->>>>>>> 5b7840b (Fix Railway deployment: Dockerfile overhaul, env var config support, QuickBooks extraction strategy, updated controllers and services)
+
     public static class BreadcrumbItem {
         private final String name;
         private final String url;
