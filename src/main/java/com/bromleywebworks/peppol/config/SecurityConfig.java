@@ -15,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@ConditionalOnBean(ClientRegistrationRepository.class)
 public class SecurityConfig {
 
     @Bean
