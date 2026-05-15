@@ -15,7 +15,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -115,42 +117,88 @@ public class FreeAgentExtractionStrategy implements ExtractionStrategy {
             sellerIdx++;
         }
 
+        // Find buyer section — prefer explicit markers, fall back to post-INVOICE line
         int buyerStart = -1;
         for (int i = 0; i < lines.length; i++) {
-            String line = lines[i].trim();
-            if (line.contains("INVOICE")) {
-                for (int j = i + 1; j < lines.length; j++) {
-                    String nextLine = lines[j].trim();
-                    if (!nextLine.isEmpty() && !nextLine.matches(".*\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4}.*")) {
-                        buyerStart = j;
-                        break;
-                    }
-                }
+            String upper = lines[i].trim().toUpperCase();
+            if (upper.contains("BILL TO") || upper.contains("CUSTOMER:")
+                    || upper.contains("INVOICE TO") || upper.contains("SOLD TO")) {
+                buyerStart = i + 1;
                 break;
             }
         }
 
-        if (buyerStart >= 0) {
-            int i = buyerStart;
-            while (i < lines.length) {
+        if (buyerStart < 0) {
+            for (int i = 0; i < lines.length; i++) {
                 String line = lines[i].trim();
-                if (line.isEmpty() || line.contains("Quantity") || line.contains("GBP")) {
+                if (line.contains("INVOICE")) {
+                    for (int j = i + 1; j < lines.length; j++) {
+                        String nextLine = lines[j].trim();
+                        if (!nextLine.isEmpty() && !nextLine.matches(".*\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4}.*")) {
+                            buyerStart = j;
+                            break;
+                        }
+                    }
                     break;
                 }
-                if (line.matches(".*\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4}.*") || line.contains("Payment due")) {
-                    i++;
+            }
+        }
+
+        if (buyerStart >= 0) {
+            List<String> addressLines = new ArrayList<>();
+            for (int i = buyerStart; i < lines.length; i++) {
+                String line = lines[i].trim();
+
+                // Stop at section boundaries
+                if (line.isEmpty() || line.contains("Quantity") || line.contains("GBP")
+                        || line.contains("Payment") || line.toUpperCase().contains("TOTAL")
+                        || line.toUpperCase().contains("DUE DATE")) {
+                    break;
+                }
+
+                // Skip date lines (e.g. "12 January 2024")
+                if (line.matches(".*\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4}.*")) {
                     continue;
                 }
-                if (buyer.getName() == null || buyer.getName().isEmpty()) {
-                    buyer.setName(line);
-                } else if (buyer.getStreet() == null || buyer.getStreet().isEmpty()) {
-                    buyer.setStreet(line);
-                } else if (buyer.getCity() == null || buyer.getCity().isEmpty()) {
-                    buyer.setCity(line);
-                } else if (buyer.getPostcode() == null || buyer.getPostcode().isEmpty()) {
-                    buyer.setPostcode(line);
+
+                addressLines.add(line);
+            }
+
+            if (!addressLines.isEmpty()) {
+                buyer.setName(addressLines.get(0));
+
+                if (addressLines.size() > 1) {
+                    buyer.setStreet(addressLines.get(1));
                 }
-                i++;
+                if (addressLines.size() > 2) {
+                    // Distinguish city from postcode: UK postcodes match a known pattern
+                    String third = addressLines.get(2);
+                    if (third.matches("[A-Z]{1,2}\\d[\\dA-Z]?\\s*\\d[A-Z]{2}")) {
+                        buyer.setPostcode(third);
+                    } else {
+                        buyer.setCity(third);
+                    }
+                }
+                if (addressLines.size() > 3) {
+                    String fourth = addressLines.get(3);
+                    if (buyer.getPostcode() == null
+                            && fourth.matches("[A-Z]{1,2}\\d[\\dA-Z]?\\s*\\d[A-Z]{2}")) {
+                        buyer.setPostcode(fourth);
+                    } else if (buyer.getPostcode() != null) {
+                        // Already have postcode — this line is country
+                        buyer.setCountry(fourth);
+                        buyer.setCountryCode(countryNameToCode(fourth));
+                    } else {
+                        buyer.setPostcode(fourth);
+                    }
+                }
+                if (addressLines.size() > 4) {
+                    String fifth = addressLines.get(4);
+                    if (buyer.getCountry() == null) {
+                        buyer.setCountry(fifth);
+                        buyer.setCountryCode(countryNameToCode(fifth));
+                    }
+                }
             }
         }
 
@@ -163,6 +211,55 @@ public class FreeAgentExtractionStrategy implements ExtractionStrategy {
 
         invoice.setSeller(seller);
         invoice.setBuyer(buyer);
+    }
+
+    /**
+     * Maps a full country name (case-insensitive) to an ISO 3166-1 alpha-2 code.
+     * Returns "GB" when the name is unrecognised.
+     */
+    private String countryNameToCode(String countryName) {
+        if (countryName == null) return "GB";
+        String upper = countryName.toUpperCase().trim();
+
+        Map<String, String> countryMap = new HashMap<>();
+        countryMap.put("UNITED KINGDOM", "GB");
+        countryMap.put("UK", "GB");
+        countryMap.put("ENGLAND", "GB");
+        countryMap.put("SCOTLAND", "GB");
+        countryMap.put("WALES", "GB");
+        countryMap.put("NORTHERN IRELAND", "GB");
+        countryMap.put("GERMANY", "DE");
+        countryMap.put("DEUTSCHLAND", "DE");
+        countryMap.put("FRANCE", "FR");
+        countryMap.put("ITALY", "IT");
+        countryMap.put("ITALIA", "IT");
+        countryMap.put("SPAIN", "ES");
+        countryMap.put("ESPAÑA", "ES");
+        countryMap.put("NETHERLANDS", "NL");
+        countryMap.put("HOLLAND", "NL");
+        countryMap.put("BELGIUM", "BE");
+        countryMap.put("BELGIQUE", "BE");
+        countryMap.put("IRELAND", "IE");
+        countryMap.put("EIRE", "IE");
+        countryMap.put("POLAND", "PL");
+        countryMap.put("PORTUGAL", "PT");
+        countryMap.put("SWEDEN", "SE");
+        countryMap.put("NORWAY", "NO");
+        countryMap.put("DENMARK", "DK");
+        countryMap.put("FINLAND", "FI");
+        countryMap.put("AUSTRIA", "AT");
+        countryMap.put("SWITZERLAND", "CH");
+        countryMap.put("UNITED STATES", "US");
+        countryMap.put("USA", "US");
+        countryMap.put("UNITED STATES OF AMERICA", "US");
+        countryMap.put("CANADA", "CA");
+        countryMap.put("AUSTRALIA", "AU");
+        countryMap.put("NEW ZEALAND", "NZ");
+        countryMap.put("JAPAN", "JP");
+        countryMap.put("CHINA", "CN");
+        countryMap.put("INDIA", "IN");
+
+        return countryMap.getOrDefault(upper, "GB");
     }
 
     private void parseInvoiceMeta(String text, ExtractedInvoice invoice) {

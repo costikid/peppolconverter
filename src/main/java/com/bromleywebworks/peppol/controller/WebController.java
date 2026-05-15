@@ -24,12 +24,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class WebController {
@@ -176,7 +180,14 @@ public class WebController {
     }
 
     @GetMapping("/freeagent-to-peppol/upload")
-    public String freeagentUpload(Model model) {
+    public String freeagentUpload(
+            @RequestParam(value = "extractedBuyerName", required = false) String buyerName,
+            @RequestParam(value = "extractedBuyerStreet", required = false) String buyerStreet,
+            @RequestParam(value = "extractedBuyerCity", required = false) String buyerCity,
+            @RequestParam(value = "extractedBuyerPostcode", required = false) String buyerPostcode,
+            @RequestParam(value = "extractedBuyerCountry", required = false) String buyerCountry,
+            Model model) {
+
         List<BreadcrumbItem> breadcrumbItems = new ArrayList<>();
         breadcrumbItems.add(new BreadcrumbItem("FreeAgent to Peppol", "/freeagent-to-peppol", false));
         breadcrumbItems.add(new BreadcrumbItem("Upload", "/freeagent-to-peppol/upload", true));
@@ -185,7 +196,17 @@ public class WebController {
         model.addAttribute("description", "Upload your FreeAgent PDF invoice to convert to Peppol");
         model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent-to-peppol/upload");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
-        model.addAttribute("uploadForm", new UploadForm());
+
+        UploadForm uploadForm = new UploadForm();
+        if (buyerStreet != null && !buyerStreet.isEmpty()) uploadForm.setBuyerStreet(buyerStreet);
+        if (buyerCity != null && !buyerCity.isEmpty()) uploadForm.setBuyerCity(buyerCity);
+        if (buyerPostcode != null && !buyerPostcode.isEmpty()) uploadForm.setBuyerPostcode(buyerPostcode);
+        if (buyerCountry != null && !buyerCountry.isEmpty()) uploadForm.setBuyerCountryCode(buyerCountry);
+
+        model.addAttribute("uploadForm", uploadForm);
+        model.addAttribute("extractedBuyerName", buyerName);
+        model.addAttribute("hasExtractedData",
+                buyerStreet != null || buyerCity != null || buyerPostcode != null);
         return "freeagent/upload";
     }
 
@@ -315,6 +336,66 @@ public class WebController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.APPLICATION_XML)
                 .body(xmlOutput != null ? xmlOutput.getBytes() : new byte[0]);
+    }
+
+    @PostMapping("/freeagent-to-peppol/extract")
+    public ResponseEntity<?> extractFreeAgentPdfData(@RequestParam("file") MultipartFile file) {
+        try {
+            ExtractedInvoice extracted = extractionService.extract(file, "freeagent");
+            ExtractedInvoice.Party buyer = extracted.getBuyer();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("invoiceNumber", extracted.getInvoiceNumber());
+            response.put("issueDate", extracted.getIssueDate() != null ? extracted.getIssueDate().toString() : null);
+            response.put("dueDate", extracted.getDueDate() != null ? extracted.getDueDate().toString() : null);
+            response.put("totalAmount", extracted.getTotalAmount());
+            response.put("currency", extracted.getCurrency());
+
+            if (buyer != null) {
+                response.put("buyerName", buyer.getName());
+                response.put("buyerStreet", buyer.getStreet());
+                response.put("buyerCity", buyer.getCity());
+                response.put("buyerPostcode", buyer.getPostcode());
+                response.put("buyerCountry", buyer.getCountry());
+                response.put("buyerCountryCode", buyer.getCountryCode());
+                response.put("buyerRegion", buyer.getRegion());
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("FreeAgent PDF extraction failed", e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/quickbooks-to-peppol/extract")
+    public ResponseEntity<?> extractQuickBooksPdfData(@RequestParam("file") MultipartFile file) {
+        try {
+            ExtractedInvoice extracted = extractionService.extract(file, "quickbooks");
+            ExtractedInvoice.Party buyer = extracted.getBuyer();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("invoiceNumber", extracted.getInvoiceNumber());
+            response.put("issueDate", extracted.getIssueDate() != null ? extracted.getIssueDate().toString() : null);
+            response.put("dueDate", extracted.getDueDate() != null ? extracted.getDueDate().toString() : null);
+            response.put("totalAmount", extracted.getTotalAmount());
+            response.put("currency", extracted.getCurrency());
+
+            if (buyer != null) {
+                response.put("buyerName", buyer.getName());
+                response.put("buyerStreet", buyer.getStreet());
+                response.put("buyerCity", buyer.getCity());
+                response.put("buyerPostcode", buyer.getPostcode());
+                response.put("buyerCountry", buyer.getCountry());
+                response.put("buyerCountryCode", buyer.getCountryCode());
+                response.put("buyerRegion", buyer.getRegion());
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("QuickBooks PDF extraction failed", e);
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @GetMapping("/quickbooks-to-peppol")

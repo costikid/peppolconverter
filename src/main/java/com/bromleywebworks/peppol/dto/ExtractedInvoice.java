@@ -34,6 +34,10 @@ public class ExtractedInvoice {
         private String postcode;
         private String countryCode;
         private String vatNumber;
+        private String country;
+        private String region;
+        private String buildingNumber;
+        private String buildingName;
 
     }
 
