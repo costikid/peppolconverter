@@ -18,8 +18,17 @@
 
         <div class="row">
             <div class="col-md-8">
-                <div class="alert alert-warning mb-4">
+                <div class="alert alert-info mb-4">
                     <strong>Important:</strong> Only QuickBooks PDF invoices are supported. Please upload a PDF exported from QuickBooks.
+                </div>
+
+                <div class="alert alert-warning mb-4">
+                    <strong>Required Information:</strong> To generate a compliant Peppol invoice, you must provide:
+                    <ul class="mb-0 mt-2">
+                        <li>Buyer's Peppol Endpoint ID (e.g., 0192:123456789)</li>
+                        <li>Buyer's Scheme ID (e.g., 0192 or iso6523-actorid-upis)</li>
+                        <li>Buyer's complete address (street, city, postcode, country)</li>
+                    </ul>
                 </div>
 
                 <form th:action="@{/quickbooks-to-peppol/upload}" th:object="${uploadForm}" method="post" enctype="multipart/form-data">
@@ -38,64 +47,70 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="buyerEndpoint" class="form-label">Buyer Endpoint (Optional)</label>
+                        <label for="buyerEndpoint" class="form-label"><strong>Buyer Endpoint ID *</strong></label>
                         <input type="text"
                                class="form-control"
                                id="buyerEndpoint"
                                th:field="*{buyerEndpoint}"
-                               placeholder="e.g., 0192:123456789">
-                        <div class="form-text">Peppol participant ID for the buyer</div>
+                               placeholder="e.g., 0192:123456789"
+                               required>
+                        <div class="form-text">Peppol participant ID for the buyer (required for Peppol compliance). Find it on the buyer's Peppol directory listing.</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="buyerScheme" class="form-label">Buyer Scheme (Optional)</label>
+                        <label for="buyerScheme" class="form-label"><strong>Buyer Scheme ID *</strong></label>
                         <input type="text"
                                class="form-control"
                                id="buyerScheme"
                                th:field="*{buyerScheme}"
-                               placeholder="e.g., iso6523-actorid-upis">
-                        <div class="form-text">Scheme identifier for the buyer endpoint</div>
+                               placeholder="e.g., 0192 or iso6523-actorid-upis"
+                               required>
+                        <div class="form-text">CEF EAS scheme identifier for the buyer endpoint (required for Peppol compliance). Common values: 0192 (DUNS), iso6523-actorid-upis (Peppol).</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="buyerStreet" class="form-label">Buyer Street Address (Optional)</label>
+                        <label for="buyerStreet" class="form-label"><strong>Buyer Street Address *</strong></label>
                         <input type="text"
                                class="form-control"
                                id="buyerStreet"
                                th:field="*{buyerStreet}"
-                               placeholder="e.g., 123 Main Street">
-                        <div class="form-text">Street address of the buyer</div>
+                               placeholder="e.g., 123 Main Street"
+                               required>
+                        <div class="form-text">Street address of the buyer (required for Peppol compliance). Overrides any address extracted from the PDF.</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="buyerCity" class="form-label">Buyer City (Optional)</label>
+                        <label for="buyerCity" class="form-label"><strong>Buyer City *</strong></label>
                         <input type="text"
                                class="form-control"
                                id="buyerCity"
                                th:field="*{buyerCity}"
-                               placeholder="e.g., London">
-                        <div class="form-text">City of the buyer</div>
+                               placeholder="e.g., London"
+                               required>
+                        <div class="form-text">City of the buyer (required for Peppol compliance).</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="buyerPostcode" class="form-label">Buyer Postcode (Optional)</label>
+                        <label for="buyerPostcode" class="form-label"><strong>Buyer Postcode *</strong></label>
                         <input type="text"
                                class="form-control"
                                id="buyerPostcode"
                                th:field="*{buyerPostcode}"
-                               placeholder="e.g., SW1A 1AA">
-                        <div class="form-text">Postal code of the buyer</div>
+                               placeholder="e.g., SW1A 1AA"
+                               required>
+                        <div class="form-text">Postal code of the buyer (required for Peppol compliance).</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="buyerCountryCode" class="form-label">Buyer Country Code (Optional)</label>
+                        <label for="buyerCountryCode" class="form-label"><strong>Buyer Country Code *</strong></label>
                         <input type="text"
                                class="form-control"
                                id="buyerCountryCode"
                                th:field="*{buyerCountryCode}"
                                placeholder="e.g., GB, DE, FR"
-                               maxlength="2">
-                        <div class="form-text">ISO 3166-1 alpha-2 country code (default: GB)</div>
+                               maxlength="2"
+                               required>
+                        <div class="form-text">ISO 3166-1 alpha-2 country code (required for Peppol compliance). Examples: GB, DE, FR.</div>
                     </div>
 
                     <div class="mb-3">

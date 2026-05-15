@@ -172,6 +172,17 @@ public class MappingService {
             country.setIdentificationCode(new IdentificationCodeType(request.getBuyerCountryCode()));
         }
 
+        // Validate required address fields
+        if (addr.getStreetName() == null || addr.getStreetName().getValue() == null || addr.getStreetName().getValue().isEmpty()) {
+            throw new MissingIdentifierException("Buyer Street Address is required for Peppol compliance.");
+        }
+        if (addr.getCityName() == null || addr.getCityName().getValue() == null || addr.getCityName().getValue().isEmpty()) {
+            throw new MissingIdentifierException("Buyer City is required for Peppol compliance.");
+        }
+        if (addr.getPostalZone() == null || addr.getPostalZone().getValue() == null || addr.getPostalZone().getValue().isEmpty()) {
+            throw new MissingIdentifierException("Buyer Postcode is required for Peppol compliance.");
+        }
+
         p.setPostalAddress(addr);
 
         // Legal Entity
@@ -192,8 +203,7 @@ public class MappingService {
             return lookup.get("endpointID").asText();
         }
         throw new MissingIdentifierException(
-                "Missing buyer EndpointID for: " + buyerName +
-                ". Provide it in the request metadata or add to config.json buyerLookup.");
+                "Buyer Endpoint ID is required. Please enter the Peppol participant ID for buyer: " + buyerName);
     }
 
     private String resolveBuyerSchemeID(String buyerName, ConvertRequest request) {
@@ -204,8 +214,8 @@ public class MappingService {
         if (lookup != null && lookup.has("schemeID")) {
             return lookup.get("schemeID").asText();
         }
-        log.warn("No buyer schemeID found for: {}. Using default scheme '0192'", buyerName);
-        return "0192";
+        throw new MissingIdentifierException(
+                "Buyer Scheme ID is required. Valid schemes: 0192 (DUNS), iso6523-actorid-upis (Peppol), or other CEF EAS codes. Please enter for buyer: " + buyerName);
     }
 
     private PaymentMeansType buildPaymentMeans(ExtractedInvoice extracted) {
