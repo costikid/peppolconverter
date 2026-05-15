@@ -9,6 +9,7 @@ import java.util.List;
 @Data
 public class ExtractedInvoice {
 
+    private String uuid;
     private String invoiceNumber;
     private LocalDate issueDate;
     private LocalDate dueDate;
