@@ -10,6 +10,7 @@ import com.helger.ubl21.UBL21Writer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import oasis.names.specification.ubl.schema.xsd.invoice_21.InvoiceType;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,7 @@ import java.util.Map;
 @Slf4j
 @Controller
 @RequiredArgsConstructor
+@ConditionalOnBean(FreeAgentApiClient.class)
 @RequestMapping("/freeagent")
 public class FreeAgentController {
 
