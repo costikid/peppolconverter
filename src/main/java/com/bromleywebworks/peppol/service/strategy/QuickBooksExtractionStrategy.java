@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -22,17 +24,28 @@ import java.util.regex.Pattern;
 public class QuickBooksExtractionStrategy implements ExtractionStrategy {
 
     private static final Pattern INVOICE_NUMBER   = Pattern.compile("INVOICE\\s+(\\d+)");
-    private static final Pattern ISSUE_DATE        = Pattern.compile("\\bDATE\\s+(\\d{2}/\\d{2}/\\d{4})");
-    private static final Pattern DUE_DATE          = Pattern.compile("DUE\\s+DATE\\s+(\\d{2}/\\d{2}/\\d{4})");
-    private static final Pattern TERMS             = Pattern.compile("TERMS\\s+Net\\s+(\\d+)");
+    // Generic date patterns - don't require specific labels
+    private static final Pattern DATE_SLASH        = Pattern.compile("\\b(\\d{2}/\\d{2}/\\d{4})\\b");
+    private static final Pattern DATE_DASH        = Pattern.compile("\\b(\\d{4}-\\d{2}-\\d{2})\\b");
+    private static final Pattern DATE_TEXT        = Pattern.compile("\\b(\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4})\\b");
+    // Due date patterns with and without labels
+    private static final Pattern DUE_DATE_SLASH    = Pattern.compile("(?:DUE\\s+DATE\\s*)?(\\d{2}/\\d{2}/\\d{4})", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DUE_DATE_DASH    = Pattern.compile("(?:DUE\\s+DATE\\s*)?(\\d{4}-\\d{2}-\\d{2})", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DUE_DATE_TEXT    = Pattern.compile("(?:DUE\\s+DATE\\s*)?(\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4})", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TERMS             = Pattern.compile("TERMS\\s+Net\\s+(\\d+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern VAT_REG           = Pattern.compile("VAT\\s+Registration\\s+No\\.?[:\\s]+(\\d+)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern SUBTOTAL          = Pattern.compile("SUBTOTAL\\s+([\\d.,]+)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern VAT_TOTAL         = Pattern.compile("VAT\\s+TOTAL\\s+([\\d.,]+)", Pattern.CASE_INSENSITIVE);
-    private static final Pattern BALANCE_DUE       = Pattern.compile("BALANCE\\s+DUE\\s+GBP\\s+([\\d.,]+)", Pattern.CASE_INSENSITIVE);
+    // More flexible totals patterns
+    private static final Pattern SUBTOTAL          = Pattern.compile("(?:SUBTOTAL|Subtotal|subtotal)\\s*[:\\s]*([\\d.,]+)");
+    private static final Pattern VAT_TOTAL         = Pattern.compile("(?:VAT\\s+TOTAL|VAT|Tax|TOTAL)\\s*[:\\s]*([\\d.,]+)", Pattern.CASE_INSENSITIVE);
+    private static final Pattern BALANCE_DUE       = Pattern.compile("(?:BALANCE\\s+DUE|Due|Total|AMOUNT)\\s*(?:GBP|£|\\$)?\\s*[:\\s]*([\\d.,]+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern BANK_DETAILS      = Pattern.compile("Bank:\\s+(.+?)\\s+-\\s+Account\\s+No\\.\\s+(\\d+)\\s+-\\s+Sort\\s+Code:\\s+([\\d-]+)", Pattern.CASE_INSENSITIVE);
     private static final Pattern VAT_PERCENT_TOKEN = Pattern.compile("^(\\d+)%$");
 
     private static final DateTimeFormatter QB_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter QB_DATE_ALT = new DateTimeFormatterBuilder()
+            .appendPattern("d MMMM yyyy")
+            .toFormatter();
+    private static final DateTimeFormatter QB_DATE_ISO = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final long PDF_MAX_MAIN_MEMORY  = 20 * 1024 * 1024L;
 
     @Override
@@ -68,6 +81,9 @@ public class QuickBooksExtractionStrategy implements ExtractionStrategy {
         parseTotals(text, invoice);
         parsePaymentDetails(text, invoice);
 
+        // Validate critical fields
+        validateExtractedInvoice(invoice);
+
         log.info("Parsed QuickBooks invoice: number={}, seller={}, buyer={}",
                 invoice.getInvoiceNumber(),
                 invoice.getSeller() != null ? invoice.getSeller().getName() : "null",
@@ -76,26 +92,107 @@ public class QuickBooksExtractionStrategy implements ExtractionStrategy {
         return invoice;
     }
 
+    private void validateExtractedInvoice(ExtractedInvoice invoice) {
+        if (invoice.getInvoiceNumber() == null || invoice.getInvoiceNumber().isEmpty()) {
+            log.warn("Missing invoice number");
+        }
+        if (invoice.getIssueDate() == null) {
+            log.warn("Missing issue date");
+        }
+        if (invoice.getSeller() == null || invoice.getSeller().getName() == null || invoice.getSeller().getName().isEmpty()) {
+            log.warn("Missing seller name");
+        }
+        if (invoice.getBuyer() == null || invoice.getBuyer().getName() == null || invoice.getBuyer().getName().isEmpty()) {
+            log.warn("Missing buyer name");
+        }
+        if (invoice.getLineItems() == null || invoice.getLineItems().isEmpty()) {
+            log.warn("No line items extracted");
+        }
+        if (invoice.getTotalAmount() == null || invoice.getTotalAmount().compareTo(BigDecimal.ZERO) == 0) {
+            log.warn("Missing or zero total amount");
+        }
+    }
+
+    private LocalDate parseQuickBooksDate(String text) {
+        // Try dd/MM/yyyy format (generic, no label required)
+        Matcher slashMatcher = DATE_SLASH.matcher(text);
+        if (slashMatcher.find()) {
+            try {
+                return LocalDate.parse(slashMatcher.group(1), QB_DATE);
+            } catch (Exception e) {
+                log.warn("Could not parse date with QB_DATE: {}", slashMatcher.group(1));
+            }
+        }
+        
+        // Try yyyy-MM-dd format (generic, no label required)
+        Matcher dashMatcher = DATE_DASH.matcher(text);
+        if (dashMatcher.find()) {
+            try {
+                return LocalDate.parse(dashMatcher.group(1), QB_DATE_ISO);
+            } catch (Exception e) {
+                log.warn("Could not parse date with QB_DATE_ISO: {}", dashMatcher.group(1));
+            }
+        }
+        
+        // Try d MMMM yyyy format (generic, no label required)
+        Matcher textMatcher = DATE_TEXT.matcher(text);
+        if (textMatcher.find()) {
+            try {
+                return LocalDate.parse(textMatcher.group(1), QB_DATE_ALT);
+            } catch (Exception e) {
+                log.warn("Could not parse date with QB_DATE_ALT: {}", textMatcher.group(1));
+            }
+        }
+        
+        return null;
+    }
+
+    private LocalDate parseQuickBooksDueDate(String text) {
+        // Try dd/MM/yyyy format (with or without DUE DATE label)
+        Matcher slashMatcher = DUE_DATE_SLASH.matcher(text);
+        if (slashMatcher.find()) {
+            try {
+                return LocalDate.parse(slashMatcher.group(1), QB_DATE);
+            } catch (Exception e) {
+                log.warn("Could not parse due date with QB_DATE: {}", slashMatcher.group(1));
+            }
+        }
+        
+        // Try yyyy-MM-dd format (with or without DUE DATE label)
+        Matcher dashMatcher = DUE_DATE_DASH.matcher(text);
+        if (dashMatcher.find()) {
+            try {
+                return LocalDate.parse(dashMatcher.group(1), QB_DATE_ISO);
+            } catch (Exception e) {
+                log.warn("Could not parse due date with QB_DATE_ISO: {}", dashMatcher.group(1));
+            }
+        }
+        
+        // Try d MMMM yyyy format (with or without DUE DATE label)
+        Matcher textMatcher = DUE_DATE_TEXT.matcher(text);
+        if (textMatcher.find()) {
+            try {
+                return LocalDate.parse(textMatcher.group(1), QB_DATE_ALT);
+            } catch (Exception e) {
+                log.warn("Could not parse due date with QB_DATE_ALT: {}", textMatcher.group(1));
+            }
+        }
+        
+        return null;
+    }
+
     private void parseInvoiceMeta(String text, ExtractedInvoice invoice) {
         Matcher m = INVOICE_NUMBER.matcher(text);
         if (m.find()) invoice.setInvoiceNumber(m.group(1));
 
-        Matcher dm = ISSUE_DATE.matcher(text);
-        if (dm.find()) {
-            try {
-                invoice.setIssueDate(LocalDate.parse(dm.group(1), QB_DATE));
-            } catch (Exception e) {
-                log.warn("Could not parse QB issue date: {}", dm.group(1));
-            }
+        LocalDate issueDate = parseQuickBooksDate(text);
+        if (issueDate != null) {
+            invoice.setIssueDate(issueDate);
         }
 
-        Matcher ddm = DUE_DATE.matcher(text);
-        if (ddm.find()) {
-            try {
-                invoice.setDueDate(LocalDate.parse(ddm.group(1), QB_DATE));
-            } catch (Exception e) {
-                log.warn("Could not parse QB due date: {}", ddm.group(1));
-            }
+        LocalDate dueDate = parseQuickBooksDueDate(text);
+        if (dueDate != null) {
+            invoice.setDueDate(dueDate);
         }
 
         if (invoice.getDueDate() == null && invoice.getIssueDate() != null) {
@@ -177,6 +274,16 @@ public class QuickBooksExtractionStrategy implements ExtractionStrategy {
             }
         }
         buyer.setCountryCode("GB");
+
+        // Fallback for missing address fields - use name if address incomplete
+        if (seller.getStreet() == null || seller.getStreet().isEmpty()) {
+            log.warn("Seller street address missing, using name as fallback");
+            seller.setStreet(seller.getName() != null ? seller.getName() : "Unknown");
+        }
+        if (buyer.getStreet() == null || buyer.getStreet().isEmpty()) {
+            log.warn("Buyer street address missing, using name as fallback");
+            buyer.setStreet(buyer.getName() != null ? buyer.getName() : "Unknown");
+        }
 
         invoice.setSeller(seller);
         invoice.setBuyer(buyer);
@@ -289,15 +396,40 @@ public class QuickBooksExtractionStrategy implements ExtractionStrategy {
 
     private void parseTotals(String text, ExtractedInvoice invoice) {
         Matcher sm = SUBTOTAL.matcher(text);
-        if (sm.find()) invoice.setTotalAmount(parseDecimal(sm.group(1)));
+        if (sm.find()) {
+            invoice.setTotalAmount(parseDecimal(sm.group(1)));
+        } else {
+            log.warn("Could not find SUBTOTAL in QuickBooks invoice");
+            // Fallback: try to calculate from line items
+            BigDecimal lineTotal = invoice.getLineItems().stream()
+                .map(ExtractedInvoice.LineItem::getLineTotal)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (lineTotal.compareTo(BigDecimal.ZERO) > 0) {
+                invoice.setTotalAmount(lineTotal);
+                log.info("Calculated total from line items: {}", lineTotal);
+            }
+        }
 
         Matcher vm = VAT_TOTAL.matcher(text);
         if (vm.find()) {
             invoice.setVatAmount(parseDecimal(vm.group(1)));
+        } else {
+            log.warn("Could not find VAT TOTAL in QuickBooks invoice");
         }
 
         Matcher bdm = BALANCE_DUE.matcher(text);
-        if (bdm.find()) invoice.setDueAmount(parseDecimal(bdm.group(1)));
+        if (bdm.find()) {
+            invoice.setDueAmount(parseDecimal(bdm.group(1)));
+        } else {
+            log.warn("Could not find BALANCE DUE in QuickBooks invoice");
+            // Fallback: use total + VAT as due amount
+            if (invoice.getTotalAmount() != null) {
+                BigDecimal vat = invoice.getVatAmount() != null ? invoice.getVatAmount() : BigDecimal.ZERO;
+                invoice.setDueAmount(invoice.getTotalAmount().add(vat));
+                log.info("Calculated due amount from total + VAT: {}", invoice.getDueAmount());
+            }
+        }
 
         // Fallback: derive vatAmount from balanceDue - subtotal
         if ((invoice.getVatAmount() == null || invoice.getVatAmount().compareTo(BigDecimal.ZERO) == 0)

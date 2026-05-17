@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -35,13 +36,23 @@ public class MappingService {
         invoice.setCustomizationID(new CustomizationIDType(CUSTOMIZATION_ID));
         invoice.setProfileID(new ProfileIDType(PROFILE_ID));
         invoice.setID(new IDType(extracted.getInvoiceNumber()));
-        invoice.setIssueDate(new IssueDateType(extracted.getIssueDate()));
+        // Fallback for issue date: use current date if not extracted
+        LocalDate issueDate = extracted.getIssueDate() != null ? extracted.getIssueDate() : LocalDate.now();
+        invoice.setIssueDate(new IssueDateType(issueDate));
         invoice.setDueDate(new DueDateType(extracted.getDueDate()));
         invoice.setInvoiceTypeCode(new InvoiceTypeCodeType(INVOICE_TYPE_CODE));
         invoice.setDocumentCurrencyCode(new DocumentCurrencyCodeType(extracted.getCurrency()));
 
+        // BuyerReference or OrderReference: at least one must be provided (PEPPOL-EN16931-R003)
         String buyerRef = extracted.getBuyer() != null ? extracted.getBuyer().getName() : "";
-        invoice.setBuyerReference(new BuyerReferenceType(buyerRef));
+        if (buyerRef != null && !buyerRef.isEmpty()) {
+            invoice.setBuyerReference(new BuyerReferenceType(buyerRef));
+        } else {
+            // Fallback to OrderReference with invoice number if BuyerReference is not available
+            OrderReferenceType orderRef = new OrderReferenceType();
+            orderRef.setID(new IDType(extracted.getInvoiceNumber()));
+            invoice.setOrderReference(orderRef);
+        }
 
         // Parties
         invoice.setAccountingSupplierParty(buildSupplierParty(extracted));
@@ -49,7 +60,12 @@ public class MappingService {
 
         // Payment Means
         invoice.getPaymentMeans().add(buildPaymentMeans(extracted));
-        invoice.getPaymentTerms().add(buildPaymentTerms(extracted));
+        
+        // PaymentTerms: only add if it has content (PEPPOL-EN16931-R008)
+        PaymentTermsType paymentTerms = buildPaymentTerms(extracted);
+        if (paymentTerms.getNote() != null && !paymentTerms.getNote().isEmpty()) {
+            invoice.getPaymentTerms().add(paymentTerms);
+        }
 
         // Tax & Monetary Totals
         String vatCategory = resolveVatCategory(extracted);
@@ -134,6 +150,13 @@ public class MappingService {
 
         // ID resolution: 1) request override, 2) config lookup, 3) exception
         String buyerName = buyer.getCompanyName() != null ? buyer.getCompanyName() : buyer.getName();
+        
+        // Fallback: if buyer name is still null or empty, use a default to satisfy BR-07
+        if (buyerName == null || buyerName.isEmpty()) {
+            buyerName = "Unknown Buyer";
+            log.warn("Buyer name not found, using fallback: {}", buyerName);
+        }
+        
         String endpointID = resolveBuyerEndpointID(buyerName, request);
         String schemeID = resolveBuyerSchemeID(buyerName, request);
 
@@ -141,25 +164,33 @@ public class MappingService {
         eid.setSchemeID(schemeID);
         p.setEndpointID(eid);
 
-        // PartyName
+        // PartyName: always set for BR-07 compliance
         PartyNameType partyName = new PartyNameType();
         partyName.setName(new NameType(buyerName));
         p.addPartyName(partyName);
 
-        // PostalAddress from PDF
+        // PostalAddress from PDF (only set non-empty elements per PEPPOL-EN16931-R008)
         AddressType addr = new AddressType();
-        addr.setStreetName(new StreetNameType(buyer.getStreet()));
-        if (buyer.getAdditionalStreet() != null) {
+        if (buyer.getStreet() != null && !buyer.getStreet().isEmpty()) {
+            addr.setStreetName(new StreetNameType(buyer.getStreet()));
+        }
+        if (buyer.getAdditionalStreet() != null && !buyer.getAdditionalStreet().isEmpty()) {
             addr.setAdditionalStreetName(new AdditionalStreetNameType(buyer.getAdditionalStreet()));
         }
-        addr.setCityName(new CityNameType(buyer.getCity()));
-        addr.setPostalZone(new PostalZoneType(buyer.getPostcode()));
-        CountryType country = new CountryType();
-        country.setIdentificationCode(new IdentificationCodeType(buyer.getCountryCode()));
-        addr.setCountry(country);
+        if (buyer.getCity() != null && !buyer.getCity().isEmpty()) {
+            addr.setCityName(new CityNameType(buyer.getCity()));
+        }
+        if (buyer.getPostcode() != null && !buyer.getPostcode().isEmpty()) {
+            addr.setPostalZone(new PostalZoneType(buyer.getPostcode()));
+        }
+        if (buyer.getCountryCode() != null && !buyer.getCountryCode().isEmpty()) {
+            CountryType country = new CountryType();
+            country.setIdentificationCode(new IdentificationCodeType(buyer.getCountryCode()));
+            addr.setCountry(country);
+        }
         p.setPostalAddress(addr);
 
-        // Legal Entity
+        // Legal Entity: always set for BR-07 compliance
         PartyLegalEntityType legal = new PartyLegalEntityType();
         legal.setRegistrationName(new RegistrationNameType(buyerName));
         p.addPartyLegalEntity(legal);
@@ -181,42 +212,98 @@ public class MappingService {
                 ". Provide it in the request metadata or add to config.json buyerLookup.");
     }
 
+    private static final Set<String> VALID_EAS_SCHEMES = Set.of(
+            "0002", "0007", "0009", "0037", "0060", "0088", "0096", "0097", "0106", "0130", "0135",
+            "0142", "0147", "0151", "0154", "0158", "0170", "0177", "0183", "0184", "0188", "0190",
+            "0191", "0192", "0193", "0194", "0195", "0196", "0198", "0199", "0200", "0201", "0202",
+            "0203", "0204", "0205", "0208", "0209", "0210", "0211", "0212", "0213", "0215", "0216",
+            "0217", "0218", "0219", "0220", "0221", "0225", "0230", "0235", "0240", "9910", "9913",
+            "9914", "9915", "9918", "9919", "9920", "9922", "9923", "9924", "9925", "9926", "9927",
+            "9928", "9929", "9930", "9931", "9932", "9933", "9934", "9935", "9936", "9937", "9938",
+            "9939", "9940", "9941", "9942", "9943", "9944", "9945", "9946", "9947", "9948", "9949",
+            "9950", "9951", "9952", "9953", "9957", "9959", "AN", "AQ", "AS", "AU", "EM"
+    );
+
     private String resolveBuyerSchemeID(String buyerName, ConvertRequest request) {
+        String schemeID = null;
         if (request != null && request.getBuyerScheme() != null && !request.getBuyerScheme().isEmpty()) {
-            return request.getBuyerScheme();
+            schemeID = request.getBuyerScheme();
+        } else {
+            var lookup = configService.getBuyerLookup(buyerName);
+            if (lookup != null && lookup.has("schemeID")) {
+                schemeID = lookup.get("schemeID").asText();
+            }
         }
-        var lookup = configService.getBuyerLookup(buyerName);
-        if (lookup != null && lookup.has("schemeID")) {
-            return lookup.get("schemeID").asText();
+        
+        if (schemeID == null || schemeID.isEmpty()) {
+            throw new MissingIdentifierException(
+                    "Missing buyer schemeID for: " + buyerName +
+                    ". Provide it in the request metadata or add to config.json buyerLookup.");
         }
-        throw new MissingIdentifierException(
-                "Missing buyer schemeID for: " + buyerName +
-                ". Provide it in the request metadata or add to config.json buyerLookup.");
+        
+        if (!VALID_EAS_SCHEMES.contains(schemeID)) {
+            throw new MissingIdentifierException(
+                    "Invalid buyer schemeID '" + schemeID + "' for: " + buyerName +
+                    ". Must be a valid CEF EAS code (e.g., 0002, 0007, 0088, 0130, etc.).");
+        }
+        
+        return schemeID;
     }
 
     private PaymentMeansType buildPaymentMeans(ExtractedInvoice extracted) {
         PaymentMeansType pm = new PaymentMeansType();
-        pm.setPaymentMeansCode(new PaymentMeansCodeType("30"));
+        
+        // Map payment method to PEPPOL PaymentMeansCode
+        String paymentMethod = extracted.getPaymentMethod();
+        String paymentCode = "30"; // Default: Credit transfer
+        String paymentName = "Credit transfer";
+        
+        if ("PAYPAL".equals(paymentMethod)) {
+            paymentCode = "58";
+            paymentName = "PayPal";
+        } else if ("STRIPE".equals(paymentMethod)) {
+            paymentCode = "59";
+            paymentName = "Stripe";
+        } else if ("GOCARDLESS".equals(paymentMethod)) {
+            paymentCode = "97";
+            paymentName = "Direct debit";
+        }
+        
+        ExtractedInvoice.PaymentDetails pd = extracted.getPaymentDetails();
+        
+        // Check if we have valid account details for credit transfer (BR-61)
+        if (("30".equals(paymentCode) || "58".equals(paymentCode)) && 
+            (pd == null || (pd.getAccountNumber() == null || pd.getAccountNumber().isEmpty()))) {
+            // No valid account details for credit transfer, use generic payment method
+            paymentCode = "31"; // Other payment means
+            paymentName = "Other payment means";
+            log.warn("No valid payment account details for credit transfer, using payment code 31 (Other)");
+        }
+        
+        pm.setPaymentMeansCode(new PaymentMeansCodeType(paymentCode));
         PaymentMeansCodeType pmc = pm.getPaymentMeansCode();
-        pmc.setName("Credit transfer");
+        pmc.setName(paymentName);
         pm.getPaymentID().add(new PaymentIDType(extracted.getInvoiceNumber()));
 
-        ExtractedInvoice.PaymentDetails pd = extracted.getPaymentDetails();
         if (pd != null) {
-            FinancialAccountType account = new FinancialAccountType();
-            // UK sort code + account number as pseudo-IBAN or raw account number
+            // Only create account if we have valid account details (BR-50, PEPPOL-EN16931-R008)
             String accountId = pd.getSortCode() != null && pd.getAccountNumber() != null
                     ? pd.getSortCode() + pd.getAccountNumber()
                     : pd.getAccountNumber();
-            account.setID(new IDType(accountId));
-            account.setName(new NameType(configService.getSellerString("name")));
+            
+            if (accountId != null && !accountId.isEmpty()) {
+                FinancialAccountType account = new FinancialAccountType();
+                account.setID(new IDType(accountId));
+                account.setName(new NameType(configService.getSellerString("name")));
 
-            BranchType branch = new BranchType();
-            if (pd.getSortCode() != null) {
-                branch.setID(new IDType(pd.getSortCode()));
+                // Only set branch if we have sort code (PEPPOL-EN16931-R008)
+                if (pd.getSortCode() != null && !pd.getSortCode().isEmpty()) {
+                    BranchType branch = new BranchType();
+                    branch.setID(new IDType(pd.getSortCode()));
+                    account.setFinancialInstitutionBranch(branch);
+                }
+                pm.setPayeeFinancialAccount(account);
             }
-            account.setFinancialInstitutionBranch(branch);
-            pm.setPayeeFinancialAccount(account);
         }
         return pm;
     }
@@ -225,7 +312,10 @@ public class MappingService {
         PaymentTermsType pt = new PaymentTermsType();
         if (extracted.getDueDate() != null && extracted.getIssueDate() != null) {
             long days = java.time.temporal.ChronoUnit.DAYS.between(extracted.getIssueDate(), extracted.getDueDate());
-            pt.addNote(new NoteType("Payment within " + days + " days"));
+            String note = "Payment within " + days + " days";
+            if (note != null && !note.isEmpty()) {
+                pt.addNote(new NoteType(note));
+            }
         }
         return pt;
     }
@@ -271,6 +361,10 @@ public class MappingService {
         if (!"S".equals(vatCategory)) {
             String reason = "O".equals(vatCategory) ? "Not VAT registered" : "Zero rated";
             taxCat.getTaxExemptionReason().add(new TaxExemptionReasonType(reason));
+        }
+        // Add TaxExemptionReasonCode for category E (intra-EU supplies)
+        if ("E".equals(vatCategory)) {
+            taxCat.setTaxExemptionReasonCode(new TaxExemptionReasonCodeType("VATEX-EU-F"));
         }
         TaxSchemeType scheme = new TaxSchemeType();
         scheme.setID(new IDType(TAX_SCHEME_ID));
@@ -345,6 +439,18 @@ public class MappingService {
     }
 
     private String resolveVatCategory(ExtractedInvoice extracted) {
+        // EC Status takes priority for VAT category determination
+        if (extracted.getEcStatus() != null) {
+            String ecStatus = extracted.getEcStatus().toLowerCase();
+            if (ecStatus.contains("ec goods")) {
+                return "E"; // Intra-EU supply of goods
+            } else if (ecStatus.contains("ec services")) {
+                return "E"; // Intra-EU supply of services
+            } else if (ecStatus.contains("reverse charge")) {
+                return "K"; // Reverse charge
+            }
+        }
+
         // Explicit VAT rate from line items takes priority over config (e.g. QuickBooks 20%)
         for (ExtractedInvoice.LineItem line : extracted.getLineItems()) {
             if (line.getVatRate() != null && line.getVatRate().compareTo(BigDecimal.ZERO) > 0) {

@@ -2,6 +2,7 @@ package com.bromleywebworks.peppol.service.usage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "app.cookie.secret")
 public class CookieService {
 
     private static final String COOKIE_NAME = "user_id";

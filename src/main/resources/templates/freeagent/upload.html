@@ -38,35 +38,44 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="buyerEndpoint" class="form-label">Buyer Endpoint (Optional)</label>
+                        <label for="buyerEndpoint" class="form-label">Buyer Endpoint *</label>
                         <input type="text" 
                                class="form-control" 
                                id="buyerEndpoint" 
                                th:field="*{buyerEndpoint}" 
-                               placeholder="e.g., 0192:123456789">
-                        <div class="form-text">Peppol participant ID for the buyer</div>
+                               placeholder="e.g., 0192:123456789"
+                               required>
+                        <div th:if="${#fields.hasErrors('buyerEndpoint')}" class="text-danger mt-1">
+                            <span th:each="error : ${#fields.errors('buyerEndpoint')}" th:text="${error}"></span>
+                        </div>
+                        <div class="form-text">Peppol participant ID for the buyer (e.g., 0192:123456789)</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="buyerScheme" class="form-label">Buyer Scheme (Optional)</label>
+                        <label for="buyerScheme" class="form-label">Buyer Scheme *</label>
                         <input type="text" 
                                class="form-control" 
                                id="buyerScheme" 
                                th:field="*{buyerScheme}" 
-                               placeholder="e.g., iso6523-actorid-upis">
-                        <div class="form-text">Scheme identifier for the buyer endpoint</div>
+                               placeholder="e.g., 0088"
+                               required>
+                        <div th:if="${#fields.hasErrors('buyerScheme')}" class="text-danger mt-1">
+                            <span th:each="error : ${#fields.errors('buyerScheme')}" th:text="${error}"></span>
+                        </div>
+                        <div class="form-text">The identifier type for the buyer's Peppol ID. Common codes: 0088 (EAN/GLN), 0002 (UK Companies House), 9948 (GB VAT number). Contact your buyer if unsure.</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="vatCategory" class="form-label">VAT Category (Optional)</label>
                         <select class="form-select" id="vatCategory" th:field="*{vatCategory}">
-                            <option value="">Select VAT category</option>
+                            <option value="">Auto-detect from invoice</option>
                             <option value="S">S - Standard rate</option>
                             <option value="Z">Z - Zero rate</option>
                             <option value="E">E - Exempt from VAT</option>
                             <option value="AE">AE - Reverse charge</option>
                             <option value="K">K - Intra-Community supply</option>
                         </select>
+                        <div class="form-text">Leave blank to auto-detect from invoice. Override only if auto-detection fails.</div>
                     </div>
 
                     <div class="mb-3">
@@ -75,6 +84,7 @@
                                class="form-control" 
                                id="dueDate" 
                                th:field="*{dueDate}">
+                        <div class="form-text">Leave blank to use due date from invoice. Override only if extraction fails.</div>
                     </div>
 
                     <div class="mb-3">
@@ -84,6 +94,7 @@
                                id="currency" 
                                th:field="*{currency}" 
                                placeholder="e.g., GBP, EUR">
+                        <div class="form-text">Leave blank to use currency from invoice (defaults to GBP for FreeAgent).</div>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg">Convert to Peppol</button>

@@ -10,8 +10,12 @@ public class UploadForm {
     @NotNull(message = "Please select a PDF file to upload")
     private MultipartFile pdfFile;
 
+    @NotNull(message = "Buyer Endpoint is required")
     private String buyerEndpoint;
+
+    @NotNull(message = "Buyer Scheme is required")
     private String buyerScheme;
+
     private String vatCategory;
     private String dueDate;
     private String currency;
