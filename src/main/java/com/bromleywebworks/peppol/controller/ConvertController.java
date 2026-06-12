@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,7 @@ public class ConvertController {
     private final MappingService mappingService;
     private final ValidationService validationService;
     private final FileUploadValidator fileUploadValidator;
+    private static final com.fasterxml.jackson.databind.ObjectMapper OBJECT_MAPPER = new com.fasterxml.jackson.databind.ObjectMapper();
 
     @PostMapping(value = "/convert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> convert(
@@ -37,19 +39,19 @@ public class ConvertController {
             @RequestParam(value = "converterType", defaultValue = "freeagent") String converterType,
             @RequestParam(value = "metadata", required = false) String metadataJson) {
 
+        log.info("Received conversion request for file: {}, converterType: {}", file.getOriginalFilename(), converterType);
+
+        // Validate file before processing
+        List<String> fileErrors = fileUploadValidator.validate(file);
+        if (!fileErrors.isEmpty()) {
+            log.warn("File validation failed: {}", fileErrors);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "invalid_file");
+            errorResponse.put("errors", fileErrors);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        }
+
         try {
-            log.info("Received conversion request for file: {}, converterType: {}", file.getOriginalFilename(), converterType);
-
-            // Validate file before processing
-            List<String> fileErrors = fileUploadValidator.validate(file);
-            if (!fileErrors.isEmpty()) {
-                log.warn("File validation failed: {}", fileErrors);
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("status", "invalid_file");
-                errorResponse.put("errors", fileErrors);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-            }
-
             // Phase 2: Extract
             ExtractedInvoice extracted = extractionService.extract(file, converterType);
             log.info("Extracted invoice number: {}, buyer: {}",
@@ -80,13 +82,12 @@ public class ConvertController {
                     .header("Content-Disposition",
                             "attachment; filename=\"invoice-" + safeInvoiceNumber + ".xml\"")
                     .body(xml);
-
-        } catch (Exception e) {
-            log.error("Conversion failed", e);
-            Map<String, Object> error = new HashMap<>();
-            error.put("status", "error");
-            error.put("message", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        } catch (IOException e) {
+            log.error("Extraction failed", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("status", "error");
+            errorResponse.put("message", "Failed to extract invoice data from PDF");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
     }
 
@@ -101,8 +102,7 @@ public class ConvertController {
             return new ConvertRequest();
         }
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            return mapper.readValue(metadataJson, ConvertRequest.class);
+            return OBJECT_MAPPER.readValue(metadataJson, ConvertRequest.class);
         } catch (Exception e) {
             log.warn("Could not parse metadata JSON, using defaults: {}", e.getMessage());
             return new ConvertRequest();

@@ -879,9 +879,6 @@ public class FreeAgentExtractionStrategy implements ExtractionStrategy {
         if (grandMatcher.find()) {
             BigDecimal grandTotal = parseDecimal(grandMatcher.group(1));
             invoice.setDueAmount(grandTotal);
-            if (netTotal == null) {
-                invoice.setTotalAmount(grandTotal);
-            }
             log.info("Parsed GBP Total: {}", grandTotal);
         }
 
@@ -912,9 +909,12 @@ public class FreeAgentExtractionStrategy implements ExtractionStrategy {
         }
 
         Matcher taxMatcher = VAT_SUMMARY.matcher(text);
-        BigDecimal vatAmount = null;
+        BigDecimal vatAmount = BigDecimal.ZERO;
         while (taxMatcher.find()) {
-            vatAmount = parseDecimal(taxMatcher.group(2));
+            BigDecimal parsedVat = parseDecimal(taxMatcher.group(2));
+            if (parsedVat != null) {
+                vatAmount = vatAmount.add(parsedVat);
+            }
             try {
                 BigDecimal vatRate = safeDecimal(taxMatcher.group(1));
                 if (vatRate != null && !vatRate.equals(BigDecimal.ZERO)) {
@@ -931,7 +931,7 @@ public class FreeAgentExtractionStrategy implements ExtractionStrategy {
         }
 
         // Fallback: check for VAT without rate (e.g., "VAT  962.50")
-        if (vatAmount == null) {
+        if (vatAmount.compareTo(BigDecimal.ZERO) == 0) {
             String[] lines = text.split("\\r?\\n");
             for (String line : lines) {
                 Matcher vatOnlyMatcher = VAT_AMOUNT_ONLY.matcher(line);

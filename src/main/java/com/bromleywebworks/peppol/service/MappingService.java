@@ -151,8 +151,13 @@ public class MappingService {
         // ID resolution: 1) request override, 2) config lookup, 3) exception
         String buyerName = buyer.getCompanyName() != null ? buyer.getCompanyName() : buyer.getName();
         
-        // Fallback: if buyer name is still null or empty, use a default to satisfy BR-07
+        // Fallback: if buyer name is still null or empty, require endpoint in request
         if (buyerName == null || buyerName.isEmpty()) {
+            if (request == null || request.getBuyerEndpoint() == null || request.getBuyerEndpoint().isEmpty()) {
+                throw new MissingIdentifierException(
+                        "Buyer name not found in PDF and no buyer endpoint provided in request. " +
+                        "Provide buyerEndpoint in request metadata or ensure buyer name is extractable.");
+            }
             buyerName = "Unknown Buyer";
             log.warn("Buyer name not found, using fallback: {}", buyerName);
         }
@@ -359,7 +364,18 @@ public class MappingService {
             taxCat.setPercent(new PercentType(taxPercent));
         }
         if (!"S".equals(vatCategory)) {
-            String reason = "O".equals(vatCategory) ? "Not VAT registered" : "Zero rated";
+            String reason;
+            if ("O".equals(vatCategory)) {
+                reason = "Not VAT registered";
+            } else if ("E".equals(vatCategory)) {
+                reason = "Exempt";
+            } else if ("K".equals(vatCategory)) {
+                reason = "Reverse charge";
+            } else if ("Z".equals(vatCategory)) {
+                reason = "Zero rated";
+            } else {
+                reason = "Zero rated";
+            }
             taxCat.getTaxExemptionReason().add(new TaxExemptionReasonType(reason));
         }
         // Add TaxExemptionReasonCode for category E (intra-EU supplies)
@@ -396,7 +412,7 @@ public class MappingService {
             total.getPrepaidAmount().setCurrencyID(currency);
         }
 
-        BigDecimal payable = extracted.getDueAmount() != null ? extracted.getDueAmount() : lineExtension;
+        BigDecimal payable = extracted.getDueAmount() != null ? extracted.getDueAmount() : taxInclusive;
         total.setPayableAmount(new PayableAmountType(payable));
         total.getPayableAmount().setCurrencyID(currency);
         return total;

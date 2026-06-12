@@ -1,8 +1,10 @@
 package com.bromleywebworks.peppol.service;
 
+import com.bromleywebworks.peppol.config.ConfigProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +16,12 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ConfigService {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private final ConfigProperties configProperties;
 
     @Getter
     private ObjectNode root;
@@ -29,9 +34,9 @@ public class ConfigService {
             log.info("Loaded Peppol config from PEPPOL_CONFIG_JSON environment variable");
             return;
         }
-        File configFile = new File("config.json");
+        File configFile = new File(configProperties.getConfigPath());
         if (!configFile.exists()) {
-            throw new IOException("config.json not found at: " + configFile.getAbsolutePath() +
+            throw new IOException(configProperties.getConfigPath() + " not found at: " + configFile.getAbsolutePath() +
                     " and PEPPOL_CONFIG_JSON environment variable is not set");
         }
         this.root = (ObjectNode) MAPPER.readTree(configFile);
@@ -43,13 +48,15 @@ public class ConfigService {
     }
 
     public String getSellerString(String field) {
-        return Optional.ofNullable(getSeller().get(field))
+        return Optional.ofNullable(getSeller())
+                .map(s -> s.get(field))
                 .map(com.fasterxml.jackson.databind.JsonNode::asText)
                 .orElse(null);
     }
 
     public boolean isSellerVatRegistered() {
-        return Optional.ofNullable(getSeller().get("isVatRegistered"))
+        return Optional.ofNullable(getSeller())
+                .map(s -> s.get("isVatRegistered"))
                 .map(com.fasterxml.jackson.databind.JsonNode::asBoolean)
                 .orElse(false);
     }
@@ -79,25 +86,25 @@ public class ConfigService {
     }
 
     public String getSellerAddressField(String field) {
-        ObjectNode address = (ObjectNode) getSeller().get("address");
-        if (address == null) return null;
-        return Optional.ofNullable(address.get(field))
+        return Optional.ofNullable(getSeller())
+                .map(s -> s.get("address"))
+                .map(a -> a.get(field))
                 .map(com.fasterxml.jackson.databind.JsonNode::asText)
                 .orElse(null);
     }
 
     public String getSellerContactField(String field) {
-        ObjectNode contact = (ObjectNode) getSeller().get("contact");
-        if (contact == null) return null;
-        return Optional.ofNullable(contact.get(field))
+        return Optional.ofNullable(getSeller())
+                .map(s -> s.get("contact"))
+                .map(c -> c.get(field))
                 .map(com.fasterxml.jackson.databind.JsonNode::asText)
                 .orElse(null);
     }
 
     public String getSellerBankField(String field) {
-        ObjectNode bank = (ObjectNode) getSeller().get("bankDetails");
-        if (bank == null) return null;
-        return Optional.ofNullable(bank.get(field))
+        return Optional.ofNullable(getSeller())
+                .map(s -> s.get("bankDetails"))
+                .map(b -> b.get(field))
                 .map(com.fasterxml.jackson.databind.JsonNode::asText)
                 .orElse(null);
     }

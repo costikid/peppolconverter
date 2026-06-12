@@ -23,8 +23,8 @@ public class SecurityConfigTest {
     }
 
     @Test
-    public void testFreeAgentLogin_AllowsAccess() throws Exception {
-        mockMvc.perform(get("/freeagent/login"))
+    public void testFreeAgentLanding_AllowsAccess() throws Exception {
+        mockMvc.perform(get("/freeagent-to-peppol"))
             .andExpect(status().isOk());
     }
 }

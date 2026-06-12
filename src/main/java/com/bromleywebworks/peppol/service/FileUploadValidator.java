@@ -31,20 +31,24 @@ public class FileUploadValidator {
             return errors;
         }
 
-        validateFile(file, errors);
+        validateBasicChecks(file, errors);
+        if (!errors.isEmpty()) {
+            return errors;
+        }
 
-        if (errors.isEmpty()) {
-            // Check converter-specific format
-            try (PDDocument document = PDDocument.load(file.getInputStream(),
-                    MemoryUsageSetting.setupMixed(PDF_MAX_MAIN_MEMORY))) {
-                if (converterType == ConverterType.FREEAGENT) {
-                    validateFreeAgentFormat(document, errors);
-                } else if (converterType == ConverterType.QUICKBOOKS) {
-                    validateQuickBooksFormat(document, errors);
-                }
-            } catch (IOException e) {
-                errors.add("The PDF file is corrupted or unreadable");
+        try (PDDocument document = PDDocument.load(file.getInputStream(),
+                MemoryUsageSetting.setupMixed(PDF_MAX_MAIN_MEMORY))) {
+            if (document.getNumberOfPages() > MAX_PAGE_COUNT) {
+                errors.add("PDF exceeds maximum page limit (10 pages)");
+                return errors;
             }
+            if (converterType == ConverterType.FREEAGENT) {
+                validateFreeAgentFormat(document, errors);
+            } else if (converterType == ConverterType.QUICKBOOKS) {
+                validateQuickBooksFormat(document, errors);
+            }
+        } catch (IOException e) {
+            errors.add("The PDF file is corrupted or unreadable");
         }
 
         return errors;
@@ -59,11 +63,22 @@ public class FileUploadValidator {
             errors.add("Please provide a PDF file");
             return errors;
         }
-        validateFile(file, errors);
+        validateBasicChecks(file, errors);
+        if (!errors.isEmpty()) {
+            return errors;
+        }
+        try (PDDocument document = PDDocument.load(file.getInputStream(),
+                MemoryUsageSetting.setupMixed(PDF_MAX_MAIN_MEMORY))) {
+            if (document.getNumberOfPages() > MAX_PAGE_COUNT) {
+                errors.add("PDF exceeds maximum page limit (10 pages)");
+            }
+        } catch (IOException e) {
+            errors.add("The PDF file is corrupted or unreadable");
+        }
         return errors;
     }
 
-    private void validateFile(MultipartFile file, List<String> errors) {
+    private void validateBasicChecks(MultipartFile file, List<String> errors) {
         // Check file size
         if (file.getSize() > MAX_FILE_SIZE) {
             errors.add("File size exceeds 10MB limit");
@@ -84,17 +99,6 @@ public class FileUploadValidator {
         // Verify actual file content using magic bytes (%PDF)
         if (!hasPdfMagicBytes(file)) {
             errors.add("File content does not appear to be a valid PDF");
-            return; // No point loading with PDFBox if magic bytes are wrong
-        }
-
-        // Check if PDF is readable and within page limit
-        try (PDDocument document = PDDocument.load(file.getInputStream(),
-                MemoryUsageSetting.setupMixed(PDF_MAX_MAIN_MEMORY))) {
-            if (document.getNumberOfPages() > MAX_PAGE_COUNT) {
-                errors.add("PDF exceeds maximum page limit (10 pages)");
-            }
-        } catch (IOException e) {
-            errors.add("The PDF file is corrupted or unreadable");
         }
     }
 

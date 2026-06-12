@@ -1,6 +1,15 @@
-README.md
-***REMOVED***
-TODO.md
+# Keep personal config out of version control
 config.json
-Invoice 4916.pdf
+
+# Build output
 target/
+
+# PDF invoices — real client data
+*.pdf
+
+# Generated/output files
+*.xml
+
+# Markdown files (only README.md is published)
+*.md
+!README.md

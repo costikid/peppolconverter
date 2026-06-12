@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error", ex);
         Map<String, Object> error = new HashMap<>();
         error.put("status", "error");
-        error.put("message", ex.getMessage());
+        error.put("message", "Internal server error");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 }
