@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: peppol_converter
+      POSTGRES_USER: peppol
+      POSTGRES_PASSWORD: peppol
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   peppol-converter:
     build: .
     ports:
@@ -9,3 +20,11 @@ services:
       - ./config.json:/app/config.json:ro
     environment:
       - JAVA_OPTS=-Xmx512m
+      - DATABASE_URL=jdbc:postgresql://db:5432/peppol_converter
+      - DATABASE_USERNAME=peppol
+      - DATABASE_PASSWORD=peppol
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

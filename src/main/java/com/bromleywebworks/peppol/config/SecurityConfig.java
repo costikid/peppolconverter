@@ -29,7 +29,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     "/css/**", "/js/**", "/img/**", "/webjars/**",
                     "/favicon.ico", "/error"
                 ).permitAll()
-                .antMatchers("/freeagent/invoices", "/freeagent/convert/**", "/freeagent/logout")
+                .antMatchers("/freeagent/invoices", "/freeagent/convert/**", "/freeagent/my-invoices", "/freeagent/logout")
                 .authenticated()
                 .anyRequest().permitAll()
             .and()

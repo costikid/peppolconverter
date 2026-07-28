@@ -18,6 +18,11 @@
         </div>
 
         <div class="container py-5">
+            <div class="row mb-3">
+                <div class="col-12 text-end">
+                    <a href="/freeagent/my-invoices" class="btn btn-outline-primary btn-sm">View My Converted Invoices</a>
+                </div>
+            </div>
             <div class="row" th:if="${error}">
                 <div class="col-12">
                     <div class="alert alert-danger" th:text="${error}">Error message</div>

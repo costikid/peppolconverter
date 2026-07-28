@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container-fluid p-0">
+        <div class="hero">
+            <div class="container py-5">
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <h1>My Converted Invoices</h1>
+                        <p class="lead">Your previously converted Peppol XML invoices</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container py-5">
+            <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+            <div th:replace="fragments/flash-messages :: flash-messages"></div>
+
+            <div class="row" th:if="${invoices != null and !invoices.isEmpty()}">
+                <div class="col-12">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Date</th>
+                                <th>Seller</th>
+                                <th>Buyer</th>
+                                <th>Total</th>
+                                <th>Converted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="inv : ${invoices}">
+                                <td th:text="${inv.invoiceNumber}">INV-001</td>
+                                <td th:text="${inv.issueDate != null ? inv.issueDate : '-'}">2024-01-01</td>
+                                <td th:text="${inv.sellerName != null ? inv.sellerName : '-'}">Seller</td>
+                                <td th:text="${inv.buyerName != null ? inv.buyerName : '-'}">Buyer</td>
+                                <td th:text="${(inv.currency != null ? inv.currency : '') + ' ' + (inv.totalAmount != null ? inv.totalAmount : '-')}">GBP 100.00</td>
+                                <td th:text="${inv.createdAt != null ? #temporals.format(inv.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">2024-01-01 12:00</td>
+                                <td>
+                                    <a th:href="@{/freeagent-to-peppol/result/{id}(id=${inv.id})}" class="btn btn-sm btn-outline-primary">View</a>
+                                    <a th:href="@{/freeagent-to-peppol/download/{id}(id=${inv.id})}" class="btn btn-sm btn-primary">Download</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row" th:if="${invoices == null or invoices.isEmpty()}">
+                <div class="col-12 text-center">
+                    <div class="alert alert-info">
+                        You haven't converted any invoices yet. <a href="/freeagent/invoices">Browse your FreeAgent invoices</a> to get started.
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <a href="/freeagent/invoices" class="btn btn-outline-secondary">Browse FreeAgent Invoices</a>
+                    <a href="/freeagent-to-peppol" class="btn btn-outline-secondary">Upload PDF</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

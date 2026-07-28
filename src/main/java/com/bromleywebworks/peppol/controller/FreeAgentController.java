@@ -6,9 +6,11 @@ import com.bromleywebworks.peppol.dto.freeagent.FreeAgentCompany;
 import com.bromleywebworks.peppol.dto.freeagent.FreeAgentContact;
 import com.bromleywebworks.peppol.dto.freeagent.FreeAgentInvoice;
 import com.bromleywebworks.peppol.dto.freeagent.FreeAgentInvoiceSummary;
+import com.bromleywebworks.peppol.entity.ConvertedInvoice;
 import com.bromleywebworks.peppol.exception.MissingIdentifierException;
 import com.bromleywebworks.peppol.service.FreeAgentApiService;
 import com.bromleywebworks.peppol.service.FreeAgentInvoiceMapper;
+import com.bromleywebworks.peppol.service.InvoiceStorageService;
 import com.bromleywebworks.peppol.service.MappingService;
 import com.bromleywebworks.peppol.service.ValidationService;
 import com.helger.ubl21.UBL21Writer;
@@ -27,10 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.servlet.http.HttpSession;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Controller
@@ -41,8 +40,7 @@ public class FreeAgentController {
     private final FreeAgentInvoiceMapper freeAgentInvoiceMapper;
     private final MappingService mappingService;
     private final ValidationService validationService;
-
-    private static final String SESSION_KEY_PREFIX = "upload_";
+    private final InvoiceStorageService invoiceStorageService;
 
     @GetMapping("/freeagent-login")
     public String loginPage(@AuthenticationPrincipal OAuth2User principal, Model model) {
@@ -100,7 +98,7 @@ public class FreeAgentController {
     public String convertInvoice(
             @PathVariable String id,
             @RegisteredOAuth2AuthorizedClient("freeagent") OAuth2AuthorizedClient authorizedClient,
-            HttpSession session,
+            @AuthenticationPrincipal OAuth2User principal,
             Model model,
             RedirectAttributes redirectAttributes) {
 
@@ -109,7 +107,7 @@ public class FreeAgentController {
         }
 
         try {
-            return doConversion(id, authorizedClient, session, null, null, redirectAttributes);
+            return doConversion(id, authorizedClient, principal, null, null, redirectAttributes);
         } catch (MissingIdentifierException e) {
             log.warn("Missing identifier for invoice {}: {}", id, e.getMessage());
             return showBuyerForm(id, authorizedClient, model, redirectAttributes);
@@ -124,9 +122,9 @@ public class FreeAgentController {
     public String convertInvoiceWithEndpoint(
             @PathVariable String id,
             @RegisteredOAuth2AuthorizedClient("freeagent") OAuth2AuthorizedClient authorizedClient,
+            @AuthenticationPrincipal OAuth2User principal,
             @RequestParam("buyerEndpoint") String buyerEndpoint,
             @RequestParam("buyerScheme") String buyerScheme,
-            HttpSession session,
             Model model,
             RedirectAttributes redirectAttributes) {
 
@@ -135,7 +133,7 @@ public class FreeAgentController {
         }
 
         try {
-            return doConversion(id, authorizedClient, session, buyerEndpoint, buyerScheme, redirectAttributes);
+            return doConversion(id, authorizedClient, principal, buyerEndpoint, buyerScheme, redirectAttributes);
         } catch (MissingIdentifierException e) {
             log.warn("Still missing identifier for invoice {}: {}", id, e.getMessage());
             return showBuyerForm(id, authorizedClient, model, redirectAttributes);
@@ -147,7 +145,7 @@ public class FreeAgentController {
     }
 
     private String doConversion(String id, OAuth2AuthorizedClient authorizedClient,
-                                HttpSession session, String buyerEndpoint, String buyerScheme,
+                                OAuth2User principal, String buyerEndpoint, String buyerScheme,
                                 RedirectAttributes redirectAttributes) {
         log.info("Converting FreeAgent invoice id: {}", id);
 
@@ -178,11 +176,13 @@ public class FreeAgentController {
         }
 
         String xmlOutput = UBL21Writer.invoice().getAsString(invoice);
-        String sessionId = java.util.UUID.randomUUID().toString();
-        storeUploadData(session, sessionId, xmlOutput, extracted.getInvoiceNumber());
 
-        log.info("Successfully converted FreeAgent invoice {} to Peppol XML", id);
-        return "redirect:/freeagent-to-peppol/result/" + sessionId;
+        Object idAttr = principal.getAttribute("id");
+        String userId = idAttr != null ? idAttr.toString() : principal.getAttribute("email");
+        ConvertedInvoice saved = invoiceStorageService.save(extracted, xmlOutput, userId);
+
+        log.info("Successfully converted FreeAgent invoice {} to Peppol XML (saved as id={})", id, saved.getId());
+        return "redirect:/freeagent-to-peppol/result/" + saved.getId();
     }
 
     private String showBuyerForm(String id, OAuth2AuthorizedClient authorizedClient,
@@ -216,11 +216,24 @@ public class FreeAgentController {
         }
     }
 
-    private void storeUploadData(HttpSession session, String sessionId, String xmlOutput, String invoiceNumber) {
-        Map<String, Object> data = new HashMap<>();
-        data.put("xmlOutput", xmlOutput);
-        data.put("invoiceNumber", invoiceNumber);
-        data.put("source", "oauth");
-        session.setAttribute(SESSION_KEY_PREFIX + sessionId, data);
+    @GetMapping("/freeagent/my-invoices")
+    public String mySavedInvoices(
+            @AuthenticationPrincipal OAuth2User principal,
+            Model model) {
+
+        Object idAttr = principal.getAttribute("id");
+        String userId = idAttr != null ? idAttr.toString() : principal.getAttribute("email");
+        List<ConvertedInvoice> invoices = invoiceStorageService.listForUser(userId);
+
+        List<WebController.BreadcrumbItem> breadcrumbItems = new java.util.ArrayList<>();
+        breadcrumbItems.add(new WebController.BreadcrumbItem("FreeAgent to Peppol", "/freeagent-to-peppol", false));
+        breadcrumbItems.add(new WebController.BreadcrumbItem("My Invoices", "/freeagent/my-invoices", true));
+
+        model.addAttribute("title", "My Converted Invoices");
+        model.addAttribute("description", "Your previously converted Peppol XML invoices");
+        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent/my-invoices");
+        model.addAttribute("breadcrumbItems", breadcrumbItems);
+        model.addAttribute("invoices", invoices);
+        return "freeagent/my-invoices";
     }
 }

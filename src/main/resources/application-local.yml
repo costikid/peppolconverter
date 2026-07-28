@@ -1,6 +1,16 @@
 spring:
   redis:
     enabled: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/peppol_converter
+    username: peppol
+    password: peppol
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  flyway:
+    enabled: true
   security:
     oauth2:
       client:

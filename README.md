@@ -48,6 +48,7 @@ This tool bridges that gap by:
 - **XSD validation** — Validates generated XML against Peppol BIS Billing 3.0 schemas before returning it
 - **Rate limiting** — Per-IP request throttling via Bucket4j + Caffeine to prevent abuse
 - **Usage tracking** — Lightweight in-memory (or Redis-backed) usage statistics
+- **Invoice persistence** — FreeAgent OAuth users get their converted XML invoices saved to a PostgreSQL database for re-download anytime
 - **Docker-ready** — Multi-stage Dockerfile for easy deployment; health checks included
 - **Railway / PaaS compatible** — `PORT` environment variable support and health check endpoint
 
@@ -66,6 +67,7 @@ This tool bridges that gap by:
 | Markdown Blog | CommonMark |
 | Rate Limiting | Bucket4j + Caffeine |
 | Caching / Session | Spring Session (Redis in prod) |
+| Database | PostgreSQL (Spring Data JPA + Flyway) |
 | Build | Maven |
 | Container | Eclipse Temurin 17 JRE |
 
@@ -323,6 +325,9 @@ Key fields populated:
 | `COOKIE_SECRET` | `application-local.yml`, `application-prod.yml` | Cookie signing key |
 | `COOKIE_SECRET_PREVIOUS` | `application-local.yml`, `application-prod.yml` | Previous cookie signing key (for rotation) |
 | `REDIS_URL` | `application-prod.yml` | Redis connection string (production) |
+| `DATABASE_URL` | `application-prod.yml` | PostgreSQL JDBC connection string (production) |
+| `DATABASE_USERNAME` | `application-prod.yml` | PostgreSQL username (production) |
+| `DATABASE_PASSWORD` | `application-prod.yml` | PostgreSQL password (production) |
 | `PEPPOL_CONFIG_JSON` | `ConfigService` | Inline JSON config (overrides `config.json` file) |
 | `PORT` | `Dockerfile` | Runtime HTTP port (PaaS compatibility) |
 

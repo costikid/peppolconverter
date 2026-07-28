@@ -5,9 +5,11 @@ import com.bromleywebworks.peppol.dto.ConvertRequest;
 import com.bromleywebworks.peppol.dto.ConverterType;
 import com.bromleywebworks.peppol.dto.ExtractedInvoice;
 import com.bromleywebworks.peppol.dto.UploadForm;
+import com.bromleywebworks.peppol.entity.ConvertedInvoice;
 import com.bromleywebworks.peppol.service.BlogService;
 import com.bromleywebworks.peppol.service.ExtractionService;
 import com.bromleywebworks.peppol.service.FileUploadValidator;
+import com.bromleywebworks.peppol.service.InvoiceStorageService;
 import com.bromleywebworks.peppol.service.MappingService;
 import com.bromleywebworks.peppol.service.ValidationService;
 import com.helger.ubl21.UBL21Writer;
@@ -16,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.http.HttpHeaders;
@@ -32,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 public class WebController {
@@ -43,17 +48,20 @@ public class WebController {
     private final MappingService mappingService;
     private final ValidationService validationService;
     private final BlogService blogService;
+    private final InvoiceStorageService invoiceStorageService;
 
     public WebController(FileUploadValidator fileUploadValidator,
                          ExtractionService extractionService,
                          MappingService mappingService,
                          ValidationService validationService,
-                         BlogService blogService) {
+                         BlogService blogService,
+                         InvoiceStorageService invoiceStorageService) {
         this.fileUploadValidator = fileUploadValidator;
         this.extractionService = extractionService;
         this.mappingService = mappingService;
         this.validationService = validationService;
         this.blogService = blogService;
+        this.invoiceStorageService = invoiceStorageService;
     }
 
     @GetMapping("/")
@@ -273,48 +281,89 @@ public class WebController {
         return "freeagent/status";
     }
 
-    @GetMapping("/freeagent-to-peppol/result/{sessionId}")
+    @GetMapping("/freeagent-to-peppol/result/{id}")
     public String freeagentResult(
-            @PathVariable String sessionId,
+            @PathVariable String id,
             Model model,
-            HttpSession session) {
+            HttpSession session,
+            @AuthenticationPrincipal OAuth2User principal) {
 
-        Map<String, Object> data = getUploadData(session, sessionId);
-        if (data == null) {
-            return "redirect:/freeagent-to-peppol/upload";
+        String xmlOutput = null;
+        String invoiceNumber = null;
+        String source = "pdf";
+
+        // Try DB lookup (FreeAgent OAuth flow)
+        if (principal != null && id.matches("\\d+")) {
+            Object idAttr = principal.getAttribute("id");
+            String userId = idAttr != null ? idAttr.toString() : principal.getAttribute("email");
+            Optional<ConvertedInvoice> saved = invoiceStorageService.findByIdForUser(Long.valueOf(id), userId);
+            if (saved.isPresent()) {
+                xmlOutput = saved.get().getPeppolXml();
+                invoiceNumber = saved.get().getInvoiceNumber();
+                source = saved.get().getSource();
+            }
         }
 
-        String xmlOutput = (String) data.get("xmlOutput");
-        String invoiceNumber = sanitizeForHeader((String) data.get("invoiceNumber"));
+        // Fall back to session (anonymous PDF upload flow)
+        if (xmlOutput == null) {
+            Map<String, Object> data = getUploadData(session, id);
+            if (data == null) {
+                return "redirect:/freeagent-to-peppol/upload";
+            }
+            xmlOutput = (String) data.get("xmlOutput");
+            invoiceNumber = (String) data.get("invoiceNumber");
+            source = (String) data.getOrDefault("source", "pdf");
+        }
+
+        invoiceNumber = sanitizeForHeader(invoiceNumber);
 
         List<BreadcrumbItem> breadcrumbItems = new ArrayList<>();
         breadcrumbItems.add(new BreadcrumbItem("FreeAgent to Peppol", "/freeagent-to-peppol", false));
-        breadcrumbItems.add(new BreadcrumbItem("Result", "/freeagent-to-peppol/result/" + sessionId, true));
+        breadcrumbItems.add(new BreadcrumbItem("Result", "/freeagent-to-peppol/result/" + id, true));
 
         model.addAttribute("title", "Conversion Complete");
         model.addAttribute("description", "Your FreeAgent invoice has been converted to Peppol");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent-to-peppol/result/" + sessionId);
+        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent-to-peppol/result/" + id);
         model.addAttribute("breadcrumbItems", breadcrumbItems);
-        model.addAttribute("sessionId", sessionId);
+        model.addAttribute("sessionId", id);
         model.addAttribute("xmlOutput", xmlOutput);
         model.addAttribute("invoiceNumber", invoiceNumber);
-        model.addAttribute("source", data.getOrDefault("source", "pdf"));
+        model.addAttribute("source", source);
 
         return "freeagent/result";
     }
 
-    @GetMapping("/freeagent-to-peppol/download/{sessionId}")
+    @GetMapping("/freeagent-to-peppol/download/{id}")
     public ResponseEntity<byte[]> downloadXml(
-            @PathVariable String sessionId,
-            HttpSession session) {
+            @PathVariable String id,
+            HttpSession session,
+            @AuthenticationPrincipal OAuth2User principal) {
 
-        Map<String, Object> data = getUploadData(session, sessionId);
-        if (data == null) {
-            return ResponseEntity.badRequest().build();
+        String xmlOutput = null;
+        String invoiceNumber = null;
+
+        // Try DB lookup (FreeAgent OAuth flow)
+        if (principal != null && id.matches("\\d+")) {
+            Object idAttr = principal.getAttribute("id");
+            String userId = idAttr != null ? idAttr.toString() : principal.getAttribute("email");
+            Optional<ConvertedInvoice> saved = invoiceStorageService.findByIdForUser(Long.valueOf(id), userId);
+            if (saved.isPresent()) {
+                xmlOutput = saved.get().getPeppolXml();
+                invoiceNumber = saved.get().getInvoiceNumber();
+            }
         }
 
-        String xmlOutput = (String) data.get("xmlOutput");
-        String invoiceNumber = sanitizeForHeader((String) data.get("invoiceNumber"));
+        // Fall back to session (anonymous PDF upload flow)
+        if (xmlOutput == null) {
+            Map<String, Object> data = getUploadData(session, id);
+            if (data == null) {
+                return ResponseEntity.badRequest().build();
+            }
+            xmlOutput = (String) data.get("xmlOutput");
+            invoiceNumber = (String) data.get("invoiceNumber");
+        }
+
+        invoiceNumber = sanitizeForHeader(invoiceNumber);
         String filename = invoiceNumber != null ? "invoice-" + invoiceNumber + ".xml" : "peppol-invoice.xml";
 
         return ResponseEntity.ok()
