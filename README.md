@@ -43,7 +43,7 @@ This tool bridges that gap by:
 - **Web UI** — Clean, responsive upload interface built with Thymeleaf and Bootstrap 5
 - **REST API** — Programmatic conversion endpoint for integration into other workflows
 - **OAuth2 integration** — Connect your FreeAgent account to pull invoices without manual PDF uploads
-- **Multi-accounting-system support** — Extensible strategy pattern for adding new PDF parsers (FreeAgent supported today)
+- **Multi-accounting-system support** — Extensible strategy pattern for adding new PDF parsers (FreeAgent supported today; Xero listed in `ConverterType` enum but not yet implemented)
 - **VAT handling** — Supports multiple VAT categories (Standard `S`, Zero-rated `Z`, Exempt `E`, Out-of-scope `O`, etc.) with configurable mappings
 - **XSD validation** — Validates generated XML against Peppol BIS Billing 3.0 schemas before returning it
 - **Rate limiting** — Per-IP request throttling via Bucket4j + Caffeine to prevent abuse
@@ -99,6 +99,12 @@ com.bromleywebworks.peppol
 - **`ValidationService`** — Runs XSD validation on the generated UBL XML
 - **`ConfigService`** — Loads seller details, buyer lookup table, unit mappings, and VAT category mappings from `config.json`
 - **`BlogService`** — Renders Markdown blog posts with YAML front-matter
+- **`SecurityConfig`** — Spring Security config for OAuth2 login, public/protected routes, and CSRF exemptions
+- **`FreeAgentOAuth2UserService`** — Custom `OAuth2UserService` that fetches FreeAgent user profile via the FreeAgent API
+- **`FreeAgentApiService`** — REST client for FreeAgent API (company, invoices, contacts)
+- **`FreeAgentInvoiceMapper`** — Maps FreeAgent API invoice/contact/company data to `ExtractedInvoice` for the conversion pipeline
+- **`FreeAgentController`** — Handles OAuth2 login flow: list invoices, convert individual invoices to Peppol XML, buyer endpoint form
+- **`CookieService`** — HMAC-signed cookie for anonymous usage tracking with key rotation support
 
 ---
 
@@ -209,13 +215,22 @@ Create a `config.json` in the project root (or mount one in Docker). See `config
 
 ## Usage
 
-### Web UI
+### Web UI — PDF Upload
 
 1. Open `http://localhost:8080`
 2. Navigate to **FreeAgent to Peppol**
 3. Upload a FreeAgent PDF invoice
 4. Fill in any missing buyer endpoint details
 5. Download the generated Peppol XML
+
+### Web UI — OAuth2 Flow
+
+1. Open `http://localhost:8080` and click **Connect FreeAgent**
+2. Authorise the app via FreeAgent OAuth2
+3. Browse your FreeAgent invoices
+4. Click **Convert** on any invoice to generate Peppol XML
+5. If the buyer's Peppol endpoint is not in your `config.json` buyer lookup, fill in the buyer endpoint form
+6. Download the generated Peppol XML
 
 ### REST API
 
@@ -226,19 +241,36 @@ Create a `config.json` in the project root (or mount one in Docker). See `config
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `file` | File | Yes | The PDF invoice |
-| `buyerEndpoint` | String | No | Buyer Peppol endpoint ID |
-| `buyerScheme` | String | No | Buyer scheme ID (default `9948`) |
-| `dueDate` | String | No | Invoice due date (`YYYY-MM-DD`) |
-| `currency` | String | No | Currency code (default `GBP`) |
-| `vatCategory` | String | No | VAT category override (`S`, `Z`, `E`, `O`) |
+| `converterType` | String | No | Converter slug (default `freeagent`; `xero` listed but not yet implemented) |
+| `metadata` | String (JSON) | No | JSON object with optional override fields |
 
-**Example response:**
+**`metadata` JSON fields:**
 
 ```json
 {
-  "status": "success",
-  "xml": "<?xml version=\"1.0\"...",
-  "validationErrors": []
+  "buyerEndpoint": "7300010000001",
+  "buyerScheme": "0088",
+  "dueDate": "2025-01-31",
+  "currency": "GBP",
+  "vatCategory": "S"
+}
+```
+
+**Success response:** `200 OK` — XML body with `Content-Disposition: attachment` header
+
+**Error responses:**
+
+```json
+{
+  "status": "validation_failed",
+  "errors": ["cac:AccountingCustomerParty/cbc:EndpointID is required"]
+}
+```
+
+```json
+{
+  "status": "invalid_file",
+  "errors": ["File must be a PDF"]
 }
 ```
 
