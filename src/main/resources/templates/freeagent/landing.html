@@ -5,40 +5,54 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
-        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
-
-        <div class="row">
-            <div class="col-12">
-                <h1 class="mb-4">FreeAgent to Peppol Converter</h1>
-                <p class="lead mb-4">Convert your FreeAgent PDF invoices to Peppol BIS Billing 3.0 UBL XML format.</p>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-8">
-                <h2 class="h5 mb-3">How it works</h2>
-                <ol>
-                    <li>Upload your FreeAgent PDF invoice</li>
-                    <li>We extract the invoice data</li>
-                    <li>Convert to Peppol BIS Billing 3.0 format</li>
-                    <li>Download your XML file</li>
-                </ol>
-            </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title h5">Ready to convert?</h3>
-                        <a href="/freeagent-to-peppol/upload" class="btn btn-primary btn-lg">Start Conversion</a>
+    <main class="container-fluid p-0">
+        <div class="hero">
+            <div class="container py-5">
+                <div class="row justify-content-center">
+                    <div class="col-md-8 text-center">
+                        <h1>FreeAgent to Peppol Converter</h1>
+                        <p class="lead">Convert your FreeAgent invoices to Peppol BIS Billing 3.0 UBL XML format.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row mt-5">
-            <div class="col-12">
-                <div class="alert alert-warning">
-                    <strong>Important:</strong> Only FreeAgent PDF invoices are currently supported. Please ensure your PDF is exported from FreeAgent.
+        <div class="container py-5">
+            <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+
+            <div class="row align-items-start">
+                <div class="col-md-8">
+                    <h2 class="h5 mb-3">How it works</h2>
+                    <ol>
+                        <li>Upload your FreeAgent PDF invoice <em>or</em> connect your FreeAgent account</li>
+                        <li>We extract the invoice data</li>
+                        <li>Convert to Peppol BIS Billing 3.0 format</li>
+                        <li>Download your XML file</li>
+                    </ol>
+                </div>
+                <div class="col-md-4">
+                    <div class="card mb-3">
+                        <div class="card-body text-center">
+                            <h3 class="card-title h5">Upload a PDF</h3>
+                            <p class="card-text text-muted">No login required</p>
+                            <a href="/freeagent-to-peppol/upload" class="btn btn-primary btn-lg">Start Conversion</a>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h3 class="card-title h5">Connect FreeAgent</h3>
+                            <p class="card-text text-muted">Log in to browse &amp; convert invoices directly</p>
+                            <a href="/freeagent-login" class="btn btn-outline-primary btn-lg">Connect with FreeAgent</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="alert alert-warning">
+                        <strong>Important:</strong> Only FreeAgent PDF invoices are currently supported. Please ensure your PDF is exported from FreeAgent.
+                    </div>
                 </div>
             </div>
         </div>

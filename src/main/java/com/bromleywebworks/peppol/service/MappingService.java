@@ -467,7 +467,7 @@ public class MappingService {
             }
         }
 
-        // Explicit VAT rate from line items takes priority over config (e.g. QuickBooks 20%)
+        // Explicit VAT rate from line items takes priority over config
         for (ExtractedInvoice.LineItem line : extracted.getLineItems()) {
             if (line.getVatRate() != null && line.getVatRate().compareTo(BigDecimal.ZERO) > 0) {
                 return vatRateToPeppolCategory(line.getVatRate());

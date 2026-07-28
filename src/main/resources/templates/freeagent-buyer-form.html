@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/head :: head(${title}, ${description}, ${canonicalUrl})"></head>
+<body>
+    <header th:replace="fragments/header :: header"></header>
+    <nav th:replace="fragments/nav :: nav"></nav>
+
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('Buyer Peppol Endpoint Required', 'Enter the buyer Peppol endpoint details to continue with the conversion.')"></div>
+
+        <div class="container py-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <p class="text-muted">
+                                The buyer <strong th:text="${buyerName}">Company Name</strong> was not found in the
+                                configured buyer lookup. Please enter their Peppol endpoint ID and scheme to continue.
+                            </p>
+                            <div class="alert alert-info">
+                                <small>
+                                    The endpoint ID is the buyer's electronic address for Peppol delivery
+                                    (e.g., their VAT number, GLN, or org number). The scheme ID identifies the type
+                                    (e.g., <code>9948</code> for VAT, <code>0088</code> for GLN).
+                                </small>
+                            </div>
+                            <form th:action="@{/freeagent/convert/{id}(id=${invoiceId})}" method="post">
+                                <div class="mb-3">
+                                    <label for="buyerEndpoint" class="form-label">Buyer Endpoint ID</label>
+                                    <input type="text" class="form-control" id="buyerEndpoint"
+                                           name="buyerEndpoint" required
+                                           th:value="${buyerVatNumber != null ? buyerVatNumber : ''}"
+                                           placeholder="e.g. GB123456789"/>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="buyerScheme" class="form-label">Scheme ID</label>
+                                    <select class="form-select" id="buyerScheme" name="buyerScheme">
+                                        <option value="9948" selected>VAT Number (9948)</option>
+                                        <option value="0088">GLN (0088)</option>
+                                        <option value="0007">Organisation Number (0007)</option>
+                                        <option value="0198">Norwegian Org Number (0198)</option>
+                                        <option value="0204">Danish P Number (0204)</option>
+                                    </select>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">Convert to Peppol XML</button>
+                                    <a href="/freeagent/invoices" class="btn btn-outline-secondary">Back to Invoices</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

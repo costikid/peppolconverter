@@ -5,15 +5,14 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('About Peppol Converter', 'A simple tool to convert accounting invoices from PDF to Peppol BIS Billing 3.0 format.')"></div>
+
+        <div class="container py-5">
         <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
 
         <div class="row">
             <div class="col-lg-8">
-                <h1 class="mb-4">About Peppol Converter</h1>
-                <p class="lead mb-4">
-                    A simple tool to convert accounting invoices from PDF to Peppol BIS Billing 3.0 format.
-                </p>
                 <p>
                     Peppol (Pan-European Public Procurement On-Line) is the European standard for electronic invoicing.
                     This tool helps small businesses and developers bridge the gap between their existing accounting systems
@@ -64,6 +63,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </main>
 

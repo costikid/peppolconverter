@@ -5,15 +5,11 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
-        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('Processing Your Invoice', 'Your FreeAgent invoice is being converted to Peppol BIS Billing 3.0 format.')"></div>
 
-        <div class="row">
-            <div class="col-12">
-                <h1 class="mb-4">Processing Your Invoice</h1>
-                <p class="lead mb-4">Your FreeAgent invoice is being converted to Peppol BIS Billing 3.0 format.</p>
-            </div>
-        </div>
+        <div class="container py-5">
+        <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
 
         <div class="row">
             <div class="col-12">
@@ -33,6 +29,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </main>
 

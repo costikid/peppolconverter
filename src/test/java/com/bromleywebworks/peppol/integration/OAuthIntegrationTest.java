@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -23,8 +24,21 @@ public class OAuthIntegrationTest {
     }
 
     @Test
-    public void testQuickBooksLandingPage_Accessible() throws Exception {
-        mockMvc.perform(get("/quickbooks-to-peppol"))
+    public void testFreeAgentLoginPage_Accessible() throws Exception {
+        mockMvc.perform(get("/freeagent-login"))
             .andExpect(status().isOk());
     }
+
+    @Test
+    public void testFreeAgentInvoices_Unauthenticated_RedirectsToLogin() throws Exception {
+        mockMvc.perform(get("/freeagent/invoices"))
+            .andExpect(status().is3xxRedirection());
+    }
+
+    @Test
+    public void testFreeAgentConvert_Unauthenticated_RedirectsToLogin() throws Exception {
+        mockMvc.perform(get("/freeagent/convert/123"))
+            .andExpect(status().is3xxRedirection());
+    }
+
 }

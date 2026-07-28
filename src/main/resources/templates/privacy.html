@@ -5,13 +5,14 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('Privacy Policy', 'How we handle your data')"></div>
+
+        <div class="container py-5">
         <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
 
         <div class="row">
             <div class="col-lg-8">
-                <h1 class="mb-4">Privacy Policy</h1>
-                <p class="lead mb-4">How we handle your data</p>
 
                 <h3 class="h5 mb-3">Data Storage</h3>
                 <p>
@@ -36,6 +37,7 @@
                     No persistent tracking cookies are used.
                 </p>
             </div>
+        </div>
         </div>
     </main>
 

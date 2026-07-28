@@ -5,13 +5,14 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('Terms of Service', 'Terms and conditions for using Peppol Converter')"></div>
+
+        <div class="container py-5">
         <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
 
         <div class="row">
             <div class="col-lg-8">
-                <h1 class="mb-4">Terms of Service</h1>
-                <p class="lead mb-4">Terms and conditions for using Peppol Converter</p>
 
                 <h3 class="h5 mb-3">Acceptance of Terms</h3>
                 <p>
@@ -44,6 +45,7 @@
                     constitutes acceptance of the new terms.
                 </p>
             </div>
+        </div>
         </div>
     </main>
 

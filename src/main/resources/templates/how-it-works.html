@@ -5,16 +5,14 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('How It Works', 'Peppol Converter turns your accounting software PDF invoices into Peppol BIS Billing 3.0 XML in seconds — no manual data entry required.')"></div>
+
+        <div class="container py-5">
         <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
 
         <div class="row">
             <div class="col-lg-8">
-                <h1 class="mb-4">How It Works</h1>
-                <p class="lead mb-5">
-                    Peppol Converter turns your accounting software PDF invoices into Peppol BIS Billing 3.0 XML
-                    in seconds — no manual data entry required.
-                </p>
             </div>
         </div>
 
@@ -76,6 +74,7 @@
                     <a href="/freeagent-to-peppol/upload" class="btn btn-primary btn-lg">Start Converting</a>
                 </div>
             </div>
+        </div>
         </div>
     </main>
 

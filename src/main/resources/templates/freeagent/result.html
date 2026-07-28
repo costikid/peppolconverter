@@ -5,16 +5,12 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('Conversion Complete', 'Your FreeAgent invoice has been successfully converted to Peppol BIS Billing 3.0 format.')"></div>
+
+        <div class="container py-5">
         <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
         <div th:replace="fragments/flash-messages :: flash-messages"></div>
-
-        <div class="row">
-            <div class="col-12">
-                <h1 class="mb-4">Conversion Complete</h1>
-                <p class="lead mb-4">Your FreeAgent invoice has been successfully converted to Peppol BIS Billing 3.0 format.</p>
-            </div>
-        </div>
 
         <div class="row">
             <div class="col-12">
@@ -23,7 +19,7 @@
                         <h2 class="card-title h5 mb-0">Peppol XML Output</h2>
                     </div>
                     <div class="card-body">
-                        <pre class="bg-light p-3" style="max-height: 400px; overflow-y: auto;"><code th:text="${xmlOutput}"></code></pre>
+                        <pre class="xml-output"><code th:text="${xmlOutput}"></code></pre>
                     </div>
                     <div class="card-footer">
                         <a th:href="@{/freeagent-to-peppol/download/{sessionId}(sessionId=${sessionId})}" class="btn btn-primary">Download XML</a>
@@ -43,8 +39,10 @@
 
         <div class="row mt-4">
             <div class="col-12">
-                <a href="/freeagent-to-peppol/upload" class="btn btn-secondary">Convert Another Invoice</a>
+                <a th:if="${source == 'oauth'}" href="/freeagent/invoices" class="btn btn-secondary">Convert Another Invoice</a>
+                <a th:unless="${source == 'oauth'}" href="/freeagent-to-peppol/upload" class="btn btn-secondary">Convert Another Invoice</a>
             </div>
+        </div>
         </div>
     </main>
 

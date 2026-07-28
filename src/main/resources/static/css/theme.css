@@ -1,0 +1,537 @@
+/* ==========================================================================
+   FreeAgent Calm Commerce — Custom Theme
+   Overrides Bootstrap 5 defaults with the FreeAgent design system.
+   Loaded after bootstrap.min.css so overrides take precedence.
+   ========================================================================== */
+
+/* ----- Design Tokens (CSS Custom Properties) ----- */
+:root {
+  /* Colors */
+  --fa-primary: #79CC6E;
+  --fa-secondary: #0069BF;
+  --fa-tertiary: #B4BCC1;
+  --fa-tertiary-text: #6C757D;
+  --fa-neutral: #F5F7F8;
+  --fa-surface: #FFFFFF;
+  --fa-on-surface: #000000;
+  --fa-text: #000000;
+  --fa-background: #FFFFFF;
+  --fa-error: #D64545;
+  --fa-border: #B4BCC1;
+
+  /* Typography */
+  --fa-font-display: "Recoleta", Georgia, "Times New Roman", serif;
+  --fa-font-body: "Circular", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Spacing */
+  --fa-space-xs: 2px;
+  --fa-space-sm: 16px;
+  --fa-space-md: 24px;
+  --fa-space-lg: 32px;
+  --fa-space-xl: 120px;
+  --fa-space-base: 8px;
+  --fa-space-gutter: 24px;
+  --fa-space-margin: 32px;
+
+  /* Rounded */
+  --fa-radius-sm: 4px;
+  --fa-radius-md: 8px;
+  --fa-radius-lg: 12px;
+  --fa-radius-xl: 16px;
+
+  /* Shadows — subtle, functional */
+  --fa-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --fa-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* ----- Bootstrap Variable Overrides ----- */
+:root {
+  --bs-primary: var(--fa-primary);
+  --bs-primary-rgb: 121, 204, 110;
+  --bs-secondary: var(--fa-secondary);
+  --bs-secondary-rgb: 0, 105, 191;
+  --bs-body-color: var(--fa-text);
+  --bs-body-bg: var(--fa-background);
+  --bs-body-font-family: var(--fa-font-body);
+  --bs-border-color: var(--fa-border);
+  --bs-link-color: var(--fa-secondary);
+  --bs-link-hover-color: #005a9e;
+  --bs-danger: var(--fa-error);
+  --bs-danger-rgb: 214, 69, 69;
+}
+
+/* ----- Base Typography ----- */
+body {
+  font-family: var(--fa-font-body);
+  font-size: 17px;
+  line-height: 24px;
+  color: var(--fa-text);
+  background-color: var(--fa-background);
+}
+
+h1, .h1 {
+  font-family: var(--fa-font-display);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 50px;
+  letter-spacing: 0;
+}
+
+h2, .h2 {
+  font-family: var(--fa-font-display);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 44px;
+  letter-spacing: 0;
+}
+
+h3, .h3 {
+  font-family: var(--fa-font-body);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 36px;
+}
+
+h4, .h4 {
+  font-family: var(--fa-font-body);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.lead {
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.small, small {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.caption {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+/* ----- Buttons ----- */
+.btn {
+  font-family: var(--fa-font-body);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+  border-radius: var(--fa-radius-sm);
+  padding: 12px 16px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-lg {
+  font-size: 17px;
+  padding: 16px 24px;
+  min-height: 48px;
+}
+
+.btn-sm {
+  font-size: 14px;
+  padding: 8px 12px;
+  min-height: 36px;
+}
+
+/* Primary button — green CTA */
+.btn-primary {
+  --bs-btn-bg: var(--fa-primary);
+  --bs-btn-border-color: var(--fa-primary);
+  --bs-btn-hover-bg: #6bb861;
+  --bs-btn-hover-border-color: #6bb861;
+  --bs-btn-active-bg: #5fa856;
+  --bs-btn-active-border-color: #5fa856;
+  --bs-btn-disabled-bg: var(--fa-primary);
+  --bs-btn-disabled-border-color: var(--fa-primary);
+  color: var(--fa-on-surface);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  color: var(--fa-on-surface);
+}
+
+/* Secondary button — outlined white with blue text */
+.btn-outline-primary {
+  --bs-btn-color: var(--fa-secondary);
+  --bs-btn-border-color: var(--fa-tertiary);
+  --bs-btn-bg: var(--fa-surface);
+  --bs-btn-hover-bg: var(--fa-neutral);
+  --bs-btn-hover-border-color: var(--fa-secondary);
+  --bs-btn-hover-color: var(--fa-secondary);
+  --bs-btn-active-bg: var(--fa-neutral);
+  --bs-btn-active-border-color: var(--fa-secondary);
+}
+
+/* Secondary variant (blue) */
+.btn-secondary {
+  --bs-btn-bg: var(--fa-secondary);
+  --bs-btn-border-color: var(--fa-secondary);
+  --bs-btn-hover-bg: #005a9e;
+  --bs-btn-hover-border-color: #005a9e;
+  color: #FFFFFF;
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--fa-secondary);
+  --bs-btn-border-color: var(--fa-tertiary);
+  --bs-btn-hover-bg: var(--fa-neutral);
+  --bs-btn-hover-border-color: var(--fa-tertiary);
+  --bs-btn-hover-color: var(--fa-secondary);
+}
+
+/* Link button — borderless, blue text */
+.btn-link {
+  color: var(--fa-secondary);
+  text-decoration: none;
+  border: none;
+  padding: 0;
+  min-height: auto;
+}
+
+.btn-link:hover {
+  color: #005a9e;
+  text-decoration: underline;
+}
+
+/* ----- Cards ----- */
+.card {
+  background-color: var(--fa-surface);
+  border: 1px solid var(--fa-border);
+  border-radius: var(--fa-radius-md);
+  box-shadow: var(--fa-shadow-card);
+}
+
+.card-body {
+  padding: var(--fa-space-md);
+}
+
+.card-header {
+  border-bottom: 1px solid var(--fa-border);
+  background-color: transparent;
+}
+
+.card-footer {
+  border-top: 1px solid var(--fa-border);
+  background-color: transparent;
+}
+
+/* ----- Forms / Inputs ----- */
+.form-control,
+.form-select {
+  border-radius: var(--fa-radius-sm);
+  border-color: var(--fa-border);
+  padding: 12px;
+  font-size: 17px;
+  line-height: 24px;
+  background-color: var(--fa-surface);
+  color: var(--fa-on-surface);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--fa-secondary);
+  box-shadow: 0 0 0 0.2rem rgba(0, 105, 191, 0.15);
+}
+
+.form-label {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+  margin-bottom: var(--fa-space-base);
+}
+
+.form-text {
+  font-size: 14px;
+  color: #6C757D;
+}
+
+/* ----- Navigation ----- */
+.navbar {
+  background-color: var(--fa-surface);
+  border-bottom: 1px solid var(--fa-border);
+}
+
+.nav-link {
+  font-family: var(--fa-font-body);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #495057;
+}
+
+.nav-link:hover,
+.nav-link:focus {
+  color: var(--fa-secondary);
+}
+
+.nav-link.active {
+  color: var(--fa-secondary);
+}
+
+/* ----- Header ----- */
+header.bg-light {
+  background-color: var(--fa-neutral) !important;
+}
+
+.text-primary {
+  color: var(--fa-secondary) !important;
+}
+
+/* ----- Alerts ----- */
+.alert {
+  border-radius: var(--fa-radius-md);
+  border: 1px solid var(--fa-border);
+}
+
+.alert-success {
+  background-color: var(--fa-neutral);
+  border-color: var(--fa-primary);
+  color: var(--fa-text);
+}
+
+.alert-success strong {
+  color: #4a8a42;
+}
+
+.alert-warning {
+  background-color: #FFF9E6;
+  border-color: #E8C547;
+}
+
+.alert-danger,
+.alert-error {
+  background-color: #FDF2F2;
+  border-color: var(--fa-error);
+  color: var(--fa-error);
+}
+
+/* ----- Chips / Badges ----- */
+.badge,
+.chip {
+  background-color: var(--fa-neutral);
+  color: var(--fa-on-surface);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  border-radius: 9999px;
+  padding: 8px 12px;
+}
+
+.badge.bg-primary {
+  background-color: var(--fa-primary) !important;
+  color: var(--fa-on-surface);
+}
+
+.badge.bg-secondary {
+  background-color: var(--fa-secondary) !important;
+}
+
+/* ----- Tables ----- */
+.table {
+  color: var(--fa-text);
+}
+
+.table > :not(caption) > * > * {
+  padding: var(--fa-space-sm);
+  border-color: var(--fa-border);
+}
+
+.table thead th {
+  font-weight: 500;
+  font-size: 14px;
+  color: #6C757D;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* ----- Breadcrumbs ----- */
+.breadcrumb {
+  font-size: 14px;
+  padding: var(--fa-space-sm) 0;
+}
+
+.breadcrumb-item a {
+  color: var(--fa-secondary);
+}
+
+/* ----- Layout Helpers ----- */
+.container {
+  padding-left: var(--fa-space-sm);
+  padding-right: var(--fa-space-sm);
+}
+
+main.container {
+  padding-top: var(--fa-space-lg);
+  padding-bottom: var(--fa-space-lg);
+}
+
+/* ----- Hero Section (for marketing pages) ----- */
+.hero {
+  background-color: var(--fa-secondary);
+  color: #FFFFFF;
+  padding: var(--fa-space-md) 0;
+  text-align: center;
+}
+
+.hero h1,
+.hero .h1 {
+  color: #FFFFFF;
+  font-size: 30px;
+  line-height: 36px;
+  margin-bottom: var(--fa-space-base);
+}
+
+.hero .lead {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 17px;
+  line-height: 24px;
+  margin-bottom: 0;
+}
+
+.hero .btn-primary {
+  background-color: var(--fa-primary);
+  border-color: var(--fa-primary);
+  color: var(--fa-on-surface);
+}
+
+/* ----- Footer ----- */
+footer {
+  border-top: 1px solid var(--fa-border);
+  background-color: var(--fa-neutral);
+  padding: var(--fa-space-lg) 0;
+  color: #6C757D;
+  font-size: 14px;
+}
+
+footer a {
+  color: var(--fa-secondary);
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* ----- Utility Overrides ----- */
+.text-muted {
+  color: var(--fa-tertiary-text) !important;
+}
+
+.border {
+  border-color: var(--fa-border) !important;
+}
+
+.bg-light {
+  background-color: var(--fa-neutral) !important;
+}
+
+.bg-white {
+  background-color: var(--fa-surface) !important;
+}
+
+/* ----- Accordion ----- */
+.accordion-item {
+  border: 1px solid var(--fa-border);
+  border-radius: var(--fa-radius-md);
+  margin-bottom: var(--fa-space-base);
+  overflow: hidden;
+}
+
+.accordion-button {
+  font-family: var(--fa-font-body);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--fa-text);
+  padding: var(--fa-space-md);
+  background-color: var(--fa-surface);
+}
+
+.accordion-button:not(.collapsed) {
+  color: var(--fa-secondary);
+  background-color: var(--fa-neutral);
+  box-shadow: none;
+}
+
+.accordion-button:focus {
+  border-color: var(--fa-secondary);
+  box-shadow: 0 0 0 0.2rem rgba(0, 105, 191, 0.15);
+}
+
+.accordion-body {
+  padding: var(--fa-space-md);
+  color: var(--fa-text);
+  font-size: 17px;
+  line-height: 24px;
+}
+
+/* ----- Pagination ----- */
+.pagination .page-link {
+  color: var(--fa-secondary);
+  border-color: var(--fa-border);
+  border-radius: var(--fa-radius-sm);
+  padding: 8px 12px;
+  margin: 0 2px;
+}
+
+.pagination .page-link:hover {
+  background-color: var(--fa-neutral);
+  color: var(--fa-secondary);
+  border-color: var(--fa-secondary);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--fa-secondary);
+  border-color: var(--fa-secondary);
+  color: #FFFFFF;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: var(--fa-tertiary);
+  background-color: var(--fa-surface);
+  border-color: var(--fa-border);
+}
+
+/* ----- Progress Bar ----- */
+.progress {
+  border-radius: var(--fa-radius-sm);
+  background-color: var(--fa-neutral);
+  height: 8px;
+}
+
+.progress-bar {
+  background-color: var(--fa-secondary);
+}
+
+/* ----- Alert Info ----- */
+.alert-info {
+  background-color: #E8F4FB;
+  border-color: var(--fa-secondary);
+  color: var(--fa-text);
+}
+
+.alert-info strong {
+  color: var(--fa-secondary);
+}
+
+/* ----- Code Block (result page) ----- */
+.xml-output {
+  background-color: var(--fa-neutral);
+  padding: var(--fa-space-md);
+  border-radius: var(--fa-radius-sm);
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--fa-text);
+}

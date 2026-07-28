@@ -5,16 +5,12 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('Upload FreeAgent Invoice', 'Upload your FreeAgent PDF invoice to convert it to Peppol BIS Billing 3.0 format.')"></div>
+
+        <div class="container py-5">
         <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
         <div th:replace="fragments/flash-messages :: flash-messages"></div>
-
-        <div class="row">
-            <div class="col-12">
-                <h1 class="mb-4">Upload FreeAgent Invoice</h1>
-                <p class="lead mb-4">Upload your FreeAgent PDF invoice to convert it to Peppol BIS Billing 3.0 format.</p>
-            </div>
-        </div>
 
         <div class="row">
             <div class="col-md-8">
@@ -100,6 +96,7 @@
                     <button type="submit" class="btn btn-primary btn-lg">Convert to Peppol</button>
                 </form>
             </div>
+        </div>
         </div>
     </main>
 

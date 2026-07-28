@@ -5,14 +5,10 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
-        <div class="row">
-            <div class="col-12">
-                <h1 class="text-center mb-4">Peppol Converter</h1>
-                <p class="text-center lead mb-5">Convert accounting invoices to Peppol BIS Billing 3.0</p>
-            </div>
-        </div>
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('Peppol Converter', 'Convert accounting invoices to Peppol BIS Billing 3.0')"></div>
 
+        <div class="container py-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <div class="card h-100">
@@ -31,6 +27,7 @@
                     <strong>Note:</strong> Currently supports FreeAgent PDF invoices only. More converters coming soon.
                 </div>
             </div>
+        </div>
         </div>
     </main>
 

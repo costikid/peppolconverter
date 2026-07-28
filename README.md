@@ -26,7 +26,7 @@ A Spring Boot web application that converts accounting invoice PDFs (primarily f
 
 ## Overview
 
-[Peppol](https://peppol.eu/) (Pan-European Public Procurement On-Line) is the European standard for electronic invoicing. Many small businesses use cloud accounting platforms like **FreeAgent** or **QuickBooks**, but these platforms do not natively export invoices in the Peppol format required by some buyers or government entities.
+[Peppol](https://peppol.eu/) (Pan-European Public Procurement On-Line) is the European standard for electronic invoicing. Many small businesses use cloud accounting platforms like **FreeAgent**, but these platforms do not natively export invoices in the Peppol format required by some buyers or government entities.
 
 This tool bridges that gap by:
 
@@ -39,11 +39,11 @@ This tool bridges that gap by:
 
 ## Features
 
-- **PDF to Peppol conversion** — Extracts invoice data from FreeAgent (and QuickBooks) PDFs and generates Peppol BIS Billing 3.0 XML
+- **PDF to Peppol conversion** — Extracts invoice data from FreeAgent PDFs and generates Peppol BIS Billing 3.0 XML
 - **Web UI** — Clean, responsive upload interface built with Thymeleaf and Bootstrap 5
 - **REST API** — Programmatic conversion endpoint for integration into other workflows
 - **OAuth2 integration** — Connect your FreeAgent account to pull invoices without manual PDF uploads
-- **Multi-accounting-system support** — Extensible strategy pattern for adding new PDF parsers (FreeAgent and QuickBooks supported today)
+- **Multi-accounting-system support** — Extensible strategy pattern for adding new PDF parsers (FreeAgent supported today)
 - **VAT handling** — Supports multiple VAT categories (Standard `S`, Zero-rated `Z`, Exempt `E`, Out-of-scope `O`, etc.) with configurable mappings
 - **XSD validation** — Validates generated XML against Peppol BIS Billing 3.0 schemas before returning it
 - **Rate limiting** — Per-IP request throttling via Bucket4j + Caffeine to prevent abuse
@@ -83,7 +83,7 @@ com.bromleywebworks.peppol
 ├── exception       # Global exception handling
 ├── filter          # Servlet filters (rate limiting)
 ├── service         # Business logic
-│   ├── strategy    # Extraction strategies (FreeAgent, QuickBooks)
+│   ├── strategy    # Extraction strategies (FreeAgent)
 │   └── usage       # Usage tracking & cookie services
 └── resources
     ├── templates   # Thymeleaf HTML templates
@@ -94,7 +94,6 @@ com.bromleywebworks.peppol
 
 - **`ExtractionService`** — Delegates PDF parsing to the correct `ExtractionStrategy` based on the converter type
 - **`FreeAgentExtractionStrategy`** — Parses FreeAgent PDF text to extract seller, buyer, line items, VAT, and totals. Handles comma-separated amounts and multiple VAT columns
-- **`QuickBooksExtractionStrategy`** — Parses QuickBooks PDF layouts
 - **`MappingService`** — Maps `ExtractedInvoice` → Peppol `InvoiceType` using ph-ubl21
 - **`PeppolInvoiceFormMapper`** — Bridges web form fields into the mapping pipeline
 - **`ValidationService`** — Runs XSD validation on the generated UBL XML

@@ -298,72 +298,13 @@ public class WebController {
         model.addAttribute("sessionId", sessionId);
         model.addAttribute("xmlOutput", xmlOutput);
         model.addAttribute("invoiceNumber", invoiceNumber);
+        model.addAttribute("source", data.getOrDefault("source", "pdf"));
 
         return "freeagent/result";
     }
 
     @GetMapping("/freeagent-to-peppol/download/{sessionId}")
     public ResponseEntity<byte[]> downloadXml(
-            @PathVariable String sessionId,
-            HttpSession session) {
-
-        Map<String, Object> data = getUploadData(session, sessionId);
-        if (data == null) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        String xmlOutput = (String) data.get("xmlOutput");
-        String invoiceNumber = sanitizeForHeader((String) data.get("invoiceNumber"));
-        String filename = invoiceNumber != null ? "invoice-" + invoiceNumber + ".xml" : "peppol-invoice.xml";
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_XML)
-                .body(xmlOutput != null ? xmlOutput.getBytes() : new byte[0]);
-    }
-
-    @GetMapping("/quickbooks-to-peppol")
-    public String quickbooksLanding(Model model) {
-        List<BreadcrumbItem> breadcrumbItems = new ArrayList<>();
-        breadcrumbItems.add(new BreadcrumbItem("QuickBooks to Peppol", "/quickbooks-to-peppol", true));
-
-        model.addAttribute("title", "QuickBooks to Peppol Converter");
-        model.addAttribute("description", "Convert QuickBooks PDF invoices to Peppol BIS Billing 3.0 UBL XML");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/quickbooks-to-peppol");
-        model.addAttribute("breadcrumbItems", breadcrumbItems);
-        return "quickbooks/landing";
-    }
-
-    @GetMapping("/quickbooks-to-peppol/result/{sessionId}")
-    public String quickbooksResult(
-            @PathVariable String sessionId,
-            Model model,
-            HttpSession session) {
-
-        Map<String, Object> data = getUploadData(session, sessionId);
-        if (data == null) {
-            return "redirect:/quickbooks-to-peppol/upload";
-        }
-
-        String xmlOutput = (String) data.get("xmlOutput");
-        String invoiceNumber = sanitizeForHeader((String) data.get("invoiceNumber"));
-
-        List<BreadcrumbItem> breadcrumbItems = new ArrayList<>();
-        breadcrumbItems.add(new BreadcrumbItem("QuickBooks to Peppol", "/quickbooks-to-peppol", false));
-        breadcrumbItems.add(new BreadcrumbItem("Result", "/quickbooks-to-peppol/result/" + sessionId, true));
-
-        model.addAttribute("title", "Conversion Complete");
-        model.addAttribute("description", "Your QuickBooks invoice has been converted to Peppol");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/quickbooks-to-peppol/result/" + sessionId);
-        model.addAttribute("breadcrumbItems", breadcrumbItems);
-        model.addAttribute("sessionId", sessionId);
-        model.addAttribute("xmlOutput", xmlOutput);
-        model.addAttribute("invoiceNumber", invoiceNumber);
-        return "quickbooks/result";
-    }
-
-    @GetMapping("/quickbooks-to-peppol/download/{sessionId}")
-    public ResponseEntity<byte[]> downloadQuickBooksXml(
             @PathVariable String sessionId,
             HttpSession session) {
 

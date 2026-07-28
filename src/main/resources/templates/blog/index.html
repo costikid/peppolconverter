@@ -5,13 +5,14 @@
     <header th:replace="fragments/header :: header"></header>
     <nav th:replace="fragments/nav :: nav"></nav>
 
-    <main class="container py-5">
+    <main class="container-fluid p-0">
+        <div th:replace="fragments/hero :: hero('Blog', 'Articles and updates about Peppol e-invoicing')"></div>
+
+        <div class="container py-5">
         <div th:replace="fragments/breadcrumb :: breadcrumb(${breadcrumbItems})"></div>
 
         <div class="row">
             <div class="col-lg-8">
-                <h1 class="mb-2">Blog</h1>
-                <p class="text-muted mb-5">Articles and updates about Peppol e-invoicing</p>
 
                 <div th:if="${posts.empty}" class="alert alert-info">
                     No posts yet — check back soon.
@@ -33,6 +34,7 @@
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     </main>
 
