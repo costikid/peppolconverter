@@ -29,6 +29,7 @@ spring:
             user-name-attribute: email
 
 app:
+  base-url: ${APP_BASE_URL:http://localhost:8080}
   cookie:
     secret: ${COOKIE_SECRET:local-dev-secret-not-for-production}
     secret-previous: ${COOKIE_SECRET_PREVIOUS:}

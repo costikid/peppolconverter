@@ -301,7 +301,7 @@ Key fields populated:
 ## Rate Limiting & Usage Tracking
 
 - **Rate limit:** Configured per IP address using a token-bucket algorithm (Bucket4j)
-- **Storage:** In-memory (Caffeine) by default; Redis-backed in production
+- **Storage:** In-memory (Caffeine)
 - **Cookie-based tracking:** A lightweight cookie stores anonymous usage metrics for UI analytics
 
 ---
@@ -324,7 +324,7 @@ Key fields populated:
 | `FREEAGENT_CLIENT_SECRET` | `application-local.yml`, `application-prod.yml` | FreeAgent OAuth2 client secret |
 | `COOKIE_SECRET` | `application-local.yml`, `application-prod.yml` | Cookie signing key |
 | `COOKIE_SECRET_PREVIOUS` | `application-local.yml`, `application-prod.yml` | Previous cookie signing key (for rotation) |
-| `REDIS_URL` | `application-prod.yml` | Redis connection string (production) |
+| `APP_BASE_URL` | `application-prod.yml` | Base URL for canonical URLs (e.g. `https://peppolconverter.co.uk`) |
 | `DATABASE_URL` | `application-prod.yml` | PostgreSQL JDBC connection string (production) |
 | `DATABASE_USERNAME` | `application-prod.yml` | PostgreSQL username (production) |
 | `DATABASE_PASSWORD` | `application-prod.yml` | PostgreSQL password (production) |

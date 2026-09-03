@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.List;
 
@@ -42,6 +43,9 @@ public class FreeAgentController {
     private final ValidationService validationService;
     private final InvoiceStorageService invoiceStorageService;
 
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
+
     @GetMapping("/freeagent-login")
     public String loginPage(@AuthenticationPrincipal OAuth2User principal, Model model) {
         if (principal != null) {
@@ -49,7 +53,7 @@ public class FreeAgentController {
         }
         model.addAttribute("title", "Connect FreeAgent - Peppol Converter");
         model.addAttribute("description", "Connect your FreeAgent account to convert invoices to Peppol");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent-login");
+        model.addAttribute("canonicalUrl", baseUrl + "/freeagent-login");
         return "freeagent-login";
     }
 
@@ -77,7 +81,7 @@ public class FreeAgentController {
 
             model.addAttribute("title", "Your FreeAgent Invoices");
             model.addAttribute("description", "Browse and convert your FreeAgent invoices to Peppol");
-            model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent/invoices");
+            model.addAttribute("canonicalUrl", baseUrl + "/freeagent/invoices");
             model.addAttribute("invoices", invoices);
             model.addAttribute("userName", userName);
             model.addAttribute("currentPage", page);
@@ -231,7 +235,7 @@ public class FreeAgentController {
 
         model.addAttribute("title", "My Converted Invoices");
         model.addAttribute("description", "Your previously converted Peppol XML invoices");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent/my-invoices");
+        model.addAttribute("canonicalUrl", baseUrl + "/freeagent/my-invoices");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         model.addAttribute("invoices", invoices);
         return "freeagent/my-invoices";

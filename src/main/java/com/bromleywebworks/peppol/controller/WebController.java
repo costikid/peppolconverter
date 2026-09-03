@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,26 +50,29 @@ public class WebController {
     private final ValidationService validationService;
     private final BlogService blogService;
     private final InvoiceStorageService invoiceStorageService;
+    private final String baseUrl;
 
     public WebController(FileUploadValidator fileUploadValidator,
                          ExtractionService extractionService,
                          MappingService mappingService,
                          ValidationService validationService,
                          BlogService blogService,
-                         InvoiceStorageService invoiceStorageService) {
+                         InvoiceStorageService invoiceStorageService,
+                         @Value("${app.base-url:http://localhost:8080}") String baseUrl) {
         this.fileUploadValidator = fileUploadValidator;
         this.extractionService = extractionService;
         this.mappingService = mappingService;
         this.validationService = validationService;
         this.blogService = blogService;
         this.invoiceStorageService = invoiceStorageService;
+        this.baseUrl = baseUrl;
     }
 
     @GetMapping("/")
     public String home(Model model) {
         model.addAttribute("title", "Peppol Converter - Home");
         model.addAttribute("description", "Convert accounting invoices to Peppol BIS Billing 3.0");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/");
+        model.addAttribute("canonicalUrl", baseUrl + "/");
         return "home";
     }
 
@@ -79,7 +83,7 @@ public class WebController {
 
         model.addAttribute("title", "About Peppol Converter");
         model.addAttribute("description", "Learn about the Peppol Converter tool and its developer");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/about");
+        model.addAttribute("canonicalUrl", baseUrl + "/about");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         return "about";
     }
@@ -91,7 +95,7 @@ public class WebController {
 
         model.addAttribute("title", "Privacy Policy");
         model.addAttribute("description", "How we handle your data");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/privacy");
+        model.addAttribute("canonicalUrl", baseUrl + "/privacy");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         return "privacy";
     }
@@ -103,7 +107,7 @@ public class WebController {
 
         model.addAttribute("title", "Terms of Service");
         model.addAttribute("description", "Terms and conditions for using Peppol Converter");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/terms");
+        model.addAttribute("canonicalUrl", baseUrl + "/terms");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         return "terms";
     }
@@ -115,7 +119,7 @@ public class WebController {
 
         model.addAttribute("title", "Contact");
         model.addAttribute("description", "Get in touch");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/contact");
+        model.addAttribute("canonicalUrl", baseUrl + "/contact");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         return "contact";
     }
@@ -127,7 +131,7 @@ public class WebController {
 
         model.addAttribute("title", "How It Works - Peppol Converter");
         model.addAttribute("description", "Learn how to convert your accounting invoices to Peppol BIS Billing 3.0");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/how-it-works");
+        model.addAttribute("canonicalUrl", baseUrl + "/how-it-works");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         return "how-it-works";
     }
@@ -139,7 +143,7 @@ public class WebController {
 
         model.addAttribute("title", "FAQ - Peppol Converter");
         model.addAttribute("description", "Frequently asked questions about Peppol Converter");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/faq");
+        model.addAttribute("canonicalUrl", baseUrl + "/faq");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         return "faq";
     }
@@ -151,7 +155,7 @@ public class WebController {
 
         model.addAttribute("title", "Blog - Peppol Converter");
         model.addAttribute("description", "Articles and updates about Peppol e-invoicing");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/blog");
+        model.addAttribute("canonicalUrl", baseUrl + "/blog");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         model.addAttribute("posts", blogService.getAllPosts());
         return "blog/index";
@@ -166,7 +170,7 @@ public class WebController {
 
             model.addAttribute("title", post.getTitle() + " - Peppol Converter");
             model.addAttribute("description", post.getSummary());
-            model.addAttribute("canonicalUrl", "https://localhost:8080/blog/" + slug);
+            model.addAttribute("canonicalUrl", baseUrl + "/blog/" + slug);
             model.addAttribute("breadcrumbItems", breadcrumbItems);
             model.addAttribute("post", post);
             return "blog/post";
@@ -180,7 +184,7 @@ public class WebController {
 
         model.addAttribute("title", "FreeAgent to Peppol Converter");
         model.addAttribute("description", "Convert FreeAgent PDF invoices to Peppol BIS Billing 3.0 UBL XML");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent-to-peppol");
+        model.addAttribute("canonicalUrl", baseUrl + "/freeagent-to-peppol");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         return "freeagent/landing";
     }
@@ -193,7 +197,7 @@ public class WebController {
 
         model.addAttribute("title", "Upload FreeAgent Invoice");
         model.addAttribute("description", "Upload your FreeAgent PDF invoice to convert to Peppol");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent-to-peppol/upload");
+        model.addAttribute("canonicalUrl", baseUrl + "/freeagent-to-peppol/upload");
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         model.addAttribute("uploadForm", new UploadForm());
         return "freeagent/upload";
@@ -271,7 +275,7 @@ public class WebController {
 
         model.addAttribute("title", "Processing Invoice");
         model.addAttribute("description", "Your FreeAgent invoice is being converted to Peppol");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent-to-peppol/status/" + sessionId);
+        model.addAttribute("canonicalUrl", baseUrl + "/freeagent-to-peppol/status/" + sessionId);
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         model.addAttribute("sessionId", sessionId);
 
@@ -323,7 +327,7 @@ public class WebController {
 
         model.addAttribute("title", "Conversion Complete");
         model.addAttribute("description", "Your FreeAgent invoice has been converted to Peppol");
-        model.addAttribute("canonicalUrl", "https://localhost:8080/freeagent-to-peppol/result/" + id);
+        model.addAttribute("canonicalUrl", baseUrl + "/freeagent-to-peppol/result/" + id);
         model.addAttribute("breadcrumbItems", breadcrumbItems);
         model.addAttribute("sessionId", id);
         model.addAttribute("xmlOutput", xmlOutput);

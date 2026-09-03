@@ -1,7 +1,6 @@
 spring:
   redis:
-    enabled: true
-    url: ${REDIS_URL}
+    enabled: false
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
@@ -28,6 +27,7 @@ spring:
             user-info-uri: https://api.freeagent.com/v2/users/me
 
 app:
+  base-url: ${APP_BASE_URL:https://peppolconverter.co.uk}
   cookie:
     secret: ${COOKIE_SECRET}
     secret-previous: ${COOKIE_SECRET_PREVIOUS:}

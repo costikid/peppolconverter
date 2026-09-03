@@ -1,4 +1,17 @@
 spring:
+  redis:
+    enabled: false
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
   security:
     oauth2:
       client:
@@ -13,3 +26,10 @@ spring:
           freeagent:
             authorization-uri: https://api.freeagent.com/v2/approve_app
             token-uri: https://api.freeagent.com/v2/token_endpoint
+            user-info-uri: https://api.freeagent.com/v2/users/me
+
+app:
+  base-url: http://localhost:8080
+  cookie:
+    secret: test-secret-not-for-production
+    secret-previous:
